@@ -5,76 +5,101 @@ Created on Aug 30, 2016
 '''
 import pandas as pd
 import numpy as np
-import ffl.computeESPN
+from ffl.auctionLeague import Auction
 import matplotlib.pyplot as plt
-import matplotlib.text as txt
+
 from matplotlib.backends.backend_pdf import PdfPages
 import os
-import sys
+
+def setupSinglePlot( xlabel= "X", title= "", xlim= None, grid= True ):
+    fig = plt.figure()
+    ax = fig.add_axes([0.1,0.1,0.8,0.8])
+    ax.grid( grid )
+    ax.set_title( title )
+    if xlim is not None:
+        ax.set_xlim( xlim )
+    ax.set_xlabel( xlabel )
+    ax.set_ylabel( "projections" )
+    
+    return fig, ax
+
+
+def makePlotsForEach( pData, meanField, computedField ):
+    numPlayers2Plt= 30 
+    os.system( " ".join(["rm", "/home/chris/Desktop/fflOutput/2017plots.pdf"])  )
+    pp= PdfPages( '/home/chris/Desktop/fflOutput/2017plots.pdf')
+    unqPos= sorted( list( pData["POSITION"].unique() ) )
+    unqPos= [ "QB", "RB", "WR" ]
+    unqPos= [ "WR" ]
+    for aPos in unqPos:
+        print(aPos)
+        posData= pData[ pData["POSITION"] == aPos ]
+        posData= posData.sort_values( by= meanField, ascending= False )
+        
+        f, ax= setupSinglePlot( xlabel= "rank", title= aPos, xlim=[-0.5, numPlayers2Plt] )
+        plt.show(block= False)
+
+        dataList= []
+        legList= []
+        
+        # just pick CBS, since the mean is stored in any of them
+        cpmData= posData[ posData["SITE_REGEX"] == "CBS" ]
+        cpmData= cpmData[ 0:numPlayers2Plt ]
+        plt.plot( np.arange(len(cpmData.NAME)), cpmData[meanField], "+" )
+        dataList.append( list(cpmData[meanField].values.copy()) )
+        legList.append( meanField )
+    
+        for aSite in sorted( list( posData["SITE_REGEX"].unique() ) ):
+            tData= posData[ posData["SITE_REGEX"] == aSite ]
+            tData= tData[ 0:numPlayers2Plt ]
+
+            plt.plot( np.arange(len(tData.NAME)), tData[computedField], "o" )
+            dataList.append( list(tData[computedField].values.copy()) )
+            legList.append( aSite + "_" + computedField )
+            
+            
+            if meanField == "PROJECTED_PTS_mean":
+                rankField= "POSITION_RANK"
+            else:
+                rankField= "computed_rank" 
+            
+            count= 0
+            for _, row in tData.iterrows():
+                idx= tData.index[count]
+                ax.text(count, tData[computedField][idx], str( int( tData[rankField][idx] ) ) )
+                count += 1
+
+#             plt.plot( np.arange(len(tData.NAME)), tData["PROJECTED_PTS"], "o" )
+#             dataList.append( list(tData["PROJECTED_PTS"].values.copy()) )
+#             legList.append( aSite + "PROJECTED_PTS" )
+        ax.legend(legList)      
+        
+        mins= list( np.array(dataList).transpose().min(axis=1) )
+        count= 0
+        for _, row in cpmData.iterrows():
+            if aPos == "Defense":
+                textStrPlot= row.TEAM
+            elif aPos == "K":
+                textStrPlot= row.NAME + ", " + row.TEAM
+            else:
+                textStrPlot= row.NAME + ", " + row.TEAM
+                 
+            txtHandle= ax.text(count, mins[count]-10, textStrPlot,\
+                 rotation= 90)
+            count += 1
+
+        pp.savefig( f )
+
+    pp.close()
+    
 
 if __name__ == '__main__':
     
-
-    pData= ffl.computeESPN.process(useESPN= True)
-    unqPos= list( pData["position"].unique() )
+    obj= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
+    obj.process()
+    pData= obj.pData.copy()
     
-    numPlayers2Plt= 30 
-    os.system( " ".join(["rm", "/home/chris/Desktop/fflPlotOutput/2016plots.pdf"])  )
-    pp= PdfPages( '/home/chris/Desktop/fflPlotOutput/2016plots.pdf')
-    for aPos in unqPos:
-        fig = plt.figure()
-        ax = fig.add_axes([0.1,0.1,0.8,0.8])
-        ax.grid(True)
-        ax.set_title( aPos )
-        
-        tData= pData[pData["position"] == aPos]
-        tData= tData.sort_values(by= "projected", ascending= False)
-        topData= tData[0:numPlayers2Plt]
-        plt.plot( np.arange(len(topData.name)), topData.projected, 'ro')
-        
-                    
-        if aPos == "WR":
-            excelDataValue= pd.read_excel("/home/chris/Desktop/2016_draftSheet.xlsx",sheetname="merge-WR")
-        elif aPos == "RB":
-            excelDataValue= pd.read_excel("/home/chris/Desktop/2016_draftSheet.xlsx",sheetname="merge-RB")
-        elif aPos == "QB":
-            excelDataValue= pd.read_excel("/home/chris/Desktop/2016_draftSheet.xlsx",sheetname="merge-QB")
-        elif aPos == "Defense":
-            excelDataValue= pd.read_excel("/home/chris/Desktop/2016_draftSheet.xlsx",sheetname="merge-DST")
-        elif aPos == "K":
-            excelDataValue= pd.read_excel("/home/chris/Desktop/2016_draftSheet.xlsx",sheetname="merge-K")
-        topExcelData= excelDataValue[0:numPlayers2Plt]
-        topExcelData= topExcelData[topExcelData["$"].values >= 0]
-        maxVal= np.max(topData[0:numPlayers2Plt].projected)
-        maxValVal= np.max(topExcelData["$"].values)
-        yFitValueReal= np.polyfit( np.arange(len(topExcelData)),  topExcelData["$"].values, deg= 1)
-        ax.text( int( len(topExcelData)/2 ), maxVal,  str( maxValVal ) + ", " + str( yFitValueReal ), color= "green")
-        yFitValue= np.polyfit( np.arange(len(topExcelData)),  topExcelData["$"].values*(maxVal/maxValVal), deg= 1)
-        #plt.plot( np.arange(len(topExcelData)), np.arange(len(topExcelData))*yFitValue[0] +  maxVal, 'g')
-        for aRowIdx in np.arange( len( topData ) ):
-            row= topData[aRowIdx:aRowIdx+1]
+#     makePlotsForEach( pData, "computed_projected_mean", "computed_projected" )
+    makePlotsForEach( pData, "PROJECTED_PTS_mean", "PROJECTED_PTS" )
 
-            
-            if aPos == "Defense":
-                textStrPlot= row.team.values[0]
-            elif aPos == "K":
-                textStrPlot= row.name.values[0] + ", " + row.team.values[0]
-            else:
-                textStrPlot= row.name.values[0] + ", " + row.team.values[0]
-                
-            txtHandle= ax.text(aRowIdx, row["projected"].values[0], textStrPlot,\
-                 rotation= 90)
-        
-        
-        yFit= np.polyfit( np.arange(numPlayers2Plt),  topData[0:numPlayers2Plt].projected.values, deg= 1)
-        ax.set_xlim([-0.5, numPlayers2Plt])
-        ax.set_xlabel("index")
-        ax.set_ylabel("total projected")
-        ax.text( int( numPlayers2Plt/2 ), yFit[1],  str( yFit[0] ) , color= "blue")
-        plt.plot( np.arange(numPlayers2Plt), np.arange(numPlayers2Plt)*yFit[0] +  yFit[1])
-        pp.savefig( fig )
-    plt.show(block= False)
-
-
-    pp.close()
     print("Done")
