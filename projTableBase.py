@@ -8,7 +8,9 @@ from abc import abstractmethod, abstractproperty, ABCMeta
 from bs4 import BeautifulSoup as bs
 import datetime
 from ffl.tableColumnCorrelate import *
+import getpass
 import numpy as np
+import os
 import pandas as pd
 import re
 import requests as rq
@@ -28,11 +30,25 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     columnMethodOverRide= None
     _cols2override= None
     _colOverrideMethodIdx= 1
-    
+    _saveLocation = None
+    _user= getpass.getuser()
 
     def __init__( self ):
+        """
+        Set stuff up for when "process" method is called for all classes
+        """
         
+        if self._user == "chris":
+            self._saveLocation= "/home/chris/Desktop/fflOutput"
+        elif self._user == "Ken":
+            """ Ken only change this path if you want to save elsewhere"""
+            self._saveLocation= "/Users/Ken/Documents/PYTHON/fantasyFootball_v2"
+            
+            
         self._addYear2SaveCSV()
+        if not re.search( "/" , self._saveCSV ): # unless a specific path in the child class use the path above
+            self._saveCSV= os.path.join( self._saveLocation, self._saveCSV )
+        
         self._oCol= ColumnCorrelate( self._nameRegex, self._tableColumnNames, self._statColRemap ) # data object which stores object to data correlation
 
 
@@ -60,7 +76,22 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         """manipulate csv string to include year"""
         splList= self._saveCSV.split(".")
         self._saveCSV= ".".join( splList[0:-1] ) + "_" + str( self._year ) + "." + "".join( splList[-1:] ) 
-        
+    
+    def _getAllNextPlayerPages( self, doc, pageAddress ):
+        hyperList= doc.findAll('a')
+
+        nextTableList= list()
+        for aTag in hyperList:
+            """Pass the table list and leave it up to the child class
+            whether or not they want to modify the list directly....
+            it could be slightly more complicated
+            """
+            if self._isnextSiteLink( aTag, pageAddress, nextTableList ):
+                if aTag[ "href" ] not in nextTableList: # leave this on this line...protect child class from returning TRUE and modifying the list
+                    nextTableList.append( aTag["href"] )
+                
+        return nextTableList
+    
     def _processPage( self, pageAddress, siteIdx, numSites, topList, levelDownRecurse ):
         """Main processing function"""
         
@@ -76,13 +107,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         else:
             assert False, "not ok"
         
-        hyperList= doc.findAll('a')
-        
-        nextTableList= list()
-        for aTag in hyperList:
-            if re.search( 'projection.*startIndex', aTag['href'] ) and re.search( "NEXT", aTag.text ):
-                if aTag['href'] not in nextTableList:
-                    nextTableList.append( aTag['href'] )
+        nextTableList= self._getAllNextPlayerPages( doc, pageAddress )
         
         tmpTableList= doc.findAll('table')
         tableBodyList= self._getTableBodyFromTableList( tmpTableList )
@@ -95,12 +120,12 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         playerRow = 0
         siteListPlayers= []
         for aRow in playerRows :
-            if self._isTableHead( aRow ):
+            if self._isTableHeadOfNoConcern( aRow ):
+                pass
+            elif self._isTableHead( aRow ):
                 self._oCol._mapCategory2ColumnNums( aRow )
             elif self._isTableSubHead( aRow ):
                 self._oCol._mapColumns2Category( aRow )
-            elif self._isTableHeadOfNoConcern( aRow ):
-                pass
             elif self._isPlayerRow( aRow ):
                 playerRow += 1
                 playerDict= self.parseTableRowTag( aRow, playerRow, pageAddress )
@@ -151,7 +176,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
                     saveKey= saveKey.upper()
                         
                     if saveKey is not None:
-                        playerDict[ saveKey ]= attemptFloatParse( aTag.text )
+                        playerDict[ saveKey ]= attemptFloatParse( aTag.text.replace( ",", "" ) ) # handle numbers with commas
             else:
                 pass
               
@@ -208,14 +233,6 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     def _tableColumnNames( self ):
         """The able column(s) you care about for the subclass"""
     
-    def getSites( self ):
-        return self._sites
-    
-    def setSites( self, inArg ):
-            
-        assert type( inArg ) == type( list() ), "_sites must be a list"
-        self._sites= inArg
-    
     @abstractproperty # this forces the subclass to define this    
     def _saveCSV( self ):
         """The csv name to which the data will be saved"""
@@ -226,8 +243,19 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     
     @abstractproperty # this forces the subclass to define this    
     def _nameRegex( self ):
-        """subclass identification string""" 
+        """subclass identification string"""
         
+    def getSites( self ):
+        return self._sites
+    
+    def setSites( self, inArg ):
+            
+        assert type( inArg ) == type( list() ), "_sites must be a list"
+        self._sites= inArg
+        
+    def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
+        return re.search( 'NEXT', aTag.text.strip().upper() )
+         
     """special override for a column which needs weird parsing"""
     columnMethodOverRide= property( getColumnMethodOverRide, setColumnMethodOverRide )
     

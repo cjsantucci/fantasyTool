@@ -11,7 +11,7 @@ class CBS_Normal( ProjTableBase ): # inherit
     
     _finalRemap= {"MISC_FPTS":"PROJECTED_PTS"}
     _nameRegex= "CBS"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflCBS.csv"
+    _saveCSV= "fflCBS.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= [ "PASSING","RECEIVING", "RUSHING", "MISC" ]
     
@@ -28,6 +28,10 @@ class CBS_Normal( ProjTableBase ): # inherit
         super( CBS_Normal, self ).__init__() # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
+    
+    def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
+        tagStr= aTag.text.strip()
+        return re.search( "NEXT", tagStr ) or re.search( "Next Page", tagStr )
     
     def _nameAndTeam( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
         tsplit= aTag.text.split(",")
@@ -74,7 +78,7 @@ class CBS_K( CBS_Normal ): # inherit
     
     _finalRemap= {"FPTS":"PROJECTED_PTS"}
     _nameRegex= "CBS"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflCBS_K.csv"
+    _saveCSV= "fflCBS_K.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
@@ -89,7 +93,7 @@ class CBS_D( CBS_Normal ): # inherit
     
     _finalRemap= {"FPTS":"PROJECTED_PTS"}
     _nameRegex= "CBS"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflCBS_K.csv"
+    _saveCSV= "fflCBS_D.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
@@ -99,12 +103,7 @@ class CBS_D( CBS_Normal ): # inherit
         
         super( CBS_D, self ).__init__() # run base constructor
         self.sites= siteList
-    
-if __name__ == '__main__':
-    oCBS= CBS_K()
-    outputList= oCBS.process( save2csv= True )
 
-         
 if __name__ == '__main__':
     oCBSList= [ CBS_Normal(), CBS_D(), CBS_K() ]
     outputList= []

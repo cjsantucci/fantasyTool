@@ -12,7 +12,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
     
     _finalRemap= {"TOTAL_PTS":"PROJECTED_PTS"}
     _nameRegex= "ESPN"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflEspn.csv"
+    _saveCSV= "fflEspn.csv"
     _statColRemap= {"RUSH":"ATT"}
     _tableColumnNames= [ "PASSING","RECEIVING", "RUSHING", "TOTAL" ]
     
@@ -31,6 +31,9 @@ class ESPN_Normal( ProjTableBase ): # inherit
         super( ESPN_Normal, self ).__init__() # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
+    
+    def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
+        return re.search( 'projection.*startIndex', aTag['href'] ) and re.search( "NEXT", aTag.text.strip() ) 
     
     def _passCompAttOverrid( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
         
@@ -93,7 +96,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
 class ESPN_D( ESPN_Normal ): # inherit
     
     _nameRegex= "ESPN"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflEspn_D.csv"
+    _saveCSV= "fflEspn_D.csv"
     _statColRemap= {}
     _tableColumnNames= ["DEFENSIVE", "TD RETURNS", "TOTAL" ]
     
@@ -111,7 +114,7 @@ class ESPN_D( ESPN_Normal ): # inherit
 class ESPN_K( ESPN_Normal ): # inherit
     
     _nameRegex= "ESPN"
-    _saveCSV= "/home/chris/Desktop/fflOutput/fflEspn_K.csv"
+    _saveCSV= "fflEspn_K.csv"
     _statColRemap= {}
     _tableColumnNames= [ "KICKING", "TOTAL" ]
     
@@ -156,7 +159,7 @@ class ESPN_K( ESPN_Normal ): # inherit
           
          
 if __name__ == '__main__':
-    oESPNList= [ESPN_Normal(), ESPN_D, ESPN_K]
+    oESPNList= [ ESPN_Normal(), ESPN_D(), ESPN_K() ]
     outputList= []
     for anObj in oESPNList:
         outputList += anObj.process( save2csv= True )

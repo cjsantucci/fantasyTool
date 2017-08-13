@@ -33,7 +33,7 @@ class ColumnCorrelate( object ):
         self._statColRemap= statColRemap
             
     def _setSiteTag( self ):
-        if re.search( self._nameRegex, "CBS" ):
+        if re.search( self._nameRegex, "CBS" ) or re.search( self._nameRegex, "FFTODAY" ):
             self._setSite= "td"
         elif re.search( self._nameRegex, "ESPN" ):
             self._siteTag= "th"
@@ -58,13 +58,21 @@ class ColumnCorrelate( object ):
         allCols= []
          
         for aData in aRow.findAll( self._siteTag ):
-            newCols= list( np.arange( lastCol+1, lastCol+1+int( aData[ "colspan" ] ) ) )
+            if self.tableColumnNames is None:
+                return
+                
+            if "colspan" in aData.attrs.keys():
+                cspan= aData[ "colspan" ]
+            else:
+                cspan=1
+                
+            newCols= list( np.arange( lastCol+1, lastCol+1+int( cspan ) ) )
             
             if aData.string is not None and aData.string.upper() in self.tableColumnNames:
                 self.columnCategoryToColumnNumber[ aData.string.upper() ]= newCols
                 allCols= allCols+newCols
                 
-            lastCol += int( aData["colspan"] )
+            lastCol += int( cspan )
     
         self.columnCategoryToColumnNumber[ self.allColsKey ]= allCols
     
@@ -85,7 +93,7 @@ class ColumnCorrelate( object ):
         for aData in aRow.findAll( "td" ):
             col += 1
             if col in self.columnCategoryToColumnNumber[ self.allColsKey ]:
-                self.col2ColumnName[ col ]= aData.find_next("a").string
+                self.col2ColumnName[ col ]= aData.text.strip()
                 self.col2ColumnCategory[ col ]= self._findCategoryWord( col )
                 
     def getTableColumnNames( self ):
