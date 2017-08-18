@@ -12,11 +12,13 @@ class ESPN_Normal( ProjTableBase ): # inherit
     
     _finalRemap= {"TOTAL_PTS":"PROJECTED_PTS"}
     _nameRegex= "ESPN"
-    _saveCSV= "fflEspn.csv"
+    _saveCSV= "fflEspnNormal.csv"
     _statColRemap= {"RUSH":"ATT"}
     _tableColumnNames= [ "PASSING","RECEIVING", "RUSHING", "TOTAL" ]
+    _tableHeaderTag= "th"
+    _tableSubHeaderTag= "td"
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         columnMethodOverRideList= [ ( 1, self._setRank ),\
                                     ( 2, self._parsePlayerNameData ),\
@@ -28,7 +30,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
                      "http://games.espn.com/ffl/tools/projections?slotCategoryId=6",\
                      ]
         
-        super( ESPN_Normal, self ).__init__() # run base constructor
+        super( ESPN_Normal, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
     
@@ -67,14 +69,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
     
     # each table is different so we over-ride this method from the base
     def _isTableHeadOfNoConcern( self, aRow ):
-        out= False
-        if hasattr( aRow, "class" ):
-            classListOfTableRow= aRow["class"]
-            for aClass in classListOfTableRow:
-                if re.search( "HEAD", aClass.upper() ):
-                    return True 
-        else:
-            return False
+        return False
     
     def _isTableSubHead( self, aRow ):
         return "playerTableBgRowSubhead" in aRow["class"]
@@ -85,13 +80,13 @@ class ESPN_Normal( ProjTableBase ): # inherit
     def _isTableHead( self, aRow ):
         return "playerTableBgRowHead" in aRow["class"]
 
-    def _getTableBodyFromTableList( self, tableList ):
+    def _setTableBodyFromTableList( self, tableList ):
         tableBodyList= []
         for aTable in tableList:
                 if "tableBody" in aTable['class']:
                     tableBodyList.append( aTable )
-                    
-        return tableBodyList
+                    self.tables= tableBodyList
+                    return
 
 class ESPN_D( ESPN_Normal ): # inherit
     
@@ -100,14 +95,14 @@ class ESPN_D( ESPN_Normal ): # inherit
     _statColRemap= {}
     _tableColumnNames= ["DEFENSIVE", "TD RETURNS", "TOTAL" ]
     
-    def __init__( self ):
+    def __init__( self, **kwargs  ):
         
         columnMethodOverRideList= [ ( 1, self._setRank ),\
                                     ( 2, self._parsePlayerNameData ),\
                                    ]
         siteList= [ "http://games.espn.com/ffl/tools/projections?slotCategoryId=16" ]
         
-        super( ESPN_D, self ).__init__() # run base constructor
+        super( ESPN_D, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
 
@@ -118,7 +113,7 @@ class ESPN_K( ESPN_Normal ): # inherit
     _statColRemap= {}
     _tableColumnNames= [ "KICKING", "TOTAL" ]
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         columnMethodOverRideList= [ ( 1, self._setRank ),\
                                     ( 2, self._parsePlayerNameData ),\
@@ -130,7 +125,7 @@ class ESPN_K( ESPN_Normal ): # inherit
                                    ]
         siteList= [ "http://games.espn.com/ffl/tools/projections?slotCategoryId=17" ]
         
-        super( ESPN_K, self ).__init__() # run base constructor
+        super( ESPN_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
     

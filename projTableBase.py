@@ -31,9 +31,12 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     _cols2override= None
     _colOverrideMethodIdx= 1
     _saveLocation = None
+    _otherTblProcObjs= None
+    _multiTableJoinMethod= "rowbyrow"
     _user= getpass.getuser()
+    _tables= None
 
-    def __init__( self ):
+    def __init__( self, **kwargs  ):
         """
         Set stuff up for when "process" method is called for all classes
         """
@@ -44,14 +47,14 @@ class ProjTableBase( object, metaclass= ABCMeta ):
             """ Ken only change this path if you want to save elsewhere"""
             self._saveLocation= "/Users/Ken/Documents/PYTHON/fantasyFootball_v2"
             
-            
-        self._addYear2SaveCSV()
-        if not re.search( "/" , self._saveCSV ): # unless a specific path in the child class use the path above
-            self._saveCSV= os.path.join( self._saveLocation, self._saveCSV )
         
-        self._oCol= ColumnCorrelate( self._nameRegex, self._tableColumnNames, self._statColRemap ) # data object which stores object to data correlation
-
-
+        if self._saveCSV is not None:
+            self._addYear2SaveCSV()
+            if not re.search( "/" , self._saveCSV ): # unless a specific path in the child class use the path above
+                self._saveCSV= os.path.join( self._saveLocation, self._saveCSV )
+        
+        self._oCol= ColumnCorrelate( self._nameRegex, self._tableColumnNames, self._statColRemap, self._tableHeaderTag, self._tableSubHeaderTag ) # data object which stores object to data correlation
+        
     def process( self, save2csv= False ):
         """ runs loop around main function which processes each page
         Sites like CBS have the position pages broken out separate 
@@ -62,15 +65,15 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         
         outputList= []
         for siteIdx , aSite in enumerate( self._sites ):
-            _, levelDownRecurse= self._processPage( self._sites[siteIdx], siteIdx, len( self._sites ), self._topList, 0 ) # recursive
+            _, levelDownRecurse= self._processPage( self._sites[siteIdx], siteIdx, len( self._sites ), outputList, 0 ) # recursive
             
         
         if save2csv:
-            fflData= pd.DataFrame( self._topList.copy() )
+            fflData= pd.DataFrame( outputList )
             print( "Saving to " + self._saveCSV )
             fflData.to_csv( self._saveCSV )
         
-        return self._topList.copy()
+        return outputList
 
     def _addYear2SaveCSV( self ):
         """manipulate csv string to include year"""
@@ -80,17 +83,17 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     def _getAllNextPlayerPages( self, doc, pageAddress ):
         hyperList= doc.findAll('a')
 
-        nextTableList= list()
+        nextLinkList= list()
         for aTag in hyperList:
             """Pass the table list and leave it up to the child class
             whether or not they want to modify the list directly....
             it could be slightly more complicated
             """
-            if self._isnextSiteLink( aTag, pageAddress, nextTableList ):
-                if aTag[ "href" ] not in nextTableList: # leave this on this line...protect child class from returning TRUE and modifying the list
-                    nextTableList.append( aTag["href"] )
+            if self._isnextSiteLink( aTag, pageAddress, nextLinkList ):
+                if aTag[ "href" ] not in nextLinkList: # leave this on this line...protect child class from returning TRUE and modifying the list
+                    nextLinkList.append( aTag["href"] )
                 
-        return nextTableList
+        return nextLinkList
     
     def _processPage( self, pageAddress, siteIdx, numSites, topList, levelDownRecurse ):
         """Main processing function"""
@@ -107,16 +110,62 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         else:
             assert False, "not ok"
         
+        
+        if self._otherTblProcObjs is not None:
+            obj2ProcessList= [ self ] + self._otherTblProcObjs
+        else:
+            obj2ProcessList= [ self ]
+            
+        tmpTableList= doc.findAll( 'table' )
+        
+        """ set tables"""
+        tPlayerListsForObjs= []
+        for anObj2Process in obj2ProcessList:
+            anObj2Process._setTableBodyFromTableList( tmpTableList )
+            assert len( anObj2Process.tables ) == 1, "for now each object is only set up for 1 table."
+            tPlayerListsForObjs.append( anObj2Process._processTable( pageAddress ) )
+        
+        topList += self._joinTableEntries( tPlayerListsForObjs )
+        
         nextTableList= self._getAllNextPlayerPages( doc, pageAddress )
+        if len( nextTableList ) > 0 and levelDownRecurse <= self._maxDepth:
+            _, levelDownRecurse= self._processPage( nextTableList[0], siteIdx, numSites, topList, levelDownRecurse )
         
-        tmpTableList= doc.findAll('table')
-        tableBodyList= self._getTableBodyFromTableList( tmpTableList )
-        assert len(tableBodyList)  == 1, "table list too long."
-        thisTable= tableBodyList[0]
+        return topList, levelDownRecurse
+    # en processPage
+    
+    def _joinTableEntries( self, playerListsForObjs ): 
+    
+        outList= []
         
+        if self._otherTblProcObjs is None:
+            outList= playerListsForObjs[0]
+        elif self._multiTableJoinMethod == "rowbyrow":
+            
+            checkLen= len( playerListsForObjs[0] )
+            for playerListIdx, aListOfPlayers in enumerate( playerListsForObjs ):
+                assert len( aListOfPlayers ) == checkLen, "length mismatch for list: " + str( playerListIdx )
+            
+            """ before it was a M object by N player list of dictionaries"""
+            """ now it will be N player by M Object list of dictionairies"""
+            listOfTuples= list( zip( *playerListsForObjs ) )
+            
+            for playerListIdx, aListOfDicts in enumerate( listOfTuples ):
+                for dictIdx, aDict in enumerate( aListOfDicts ):
+                    if dictIdx == 0:
+                        tDict= aDict
+                    else:
+                        tDict.update( aDict )
+                outList.append( tDict )
+                
+        else:
+            assert False, "only one method currently implemented for table joining--must have same number of rows"
         
+        return outList
+    
+    def _processTable( self, pageAddress ):
         """Process rows"""
-        playerRows= thisTable.findAll("tr")
+        playerRows= self.tables[0].findAll("tr")
         playerRow = 0
         siteListPlayers= []
         for aRow in playerRows :
@@ -135,18 +184,14 @@ class ProjTableBase( object, metaclass= ABCMeta ):
             else:
                 pass
         
+        """ Remap all of the fields if necessary"""
         for aPlayerDict in siteListPlayers:
             for aKey in self._finalRemap.keys():
                 if aKey in aPlayerDict:
                     aPlayerDict[ self._finalRemap[ aKey ] ]= aPlayerDict[ aKey ]
                     del aPlayerDict[ aKey ]
-        
-        topList += siteListPlayers
-        if len( nextTableList ) > 0 and levelDownRecurse <= self._maxDepth:
-            topList, levelDownRecurse= self._processPage( nextTableList[0], siteIdx, numSites, topList, levelDownRecurse )
-        
-        return topList, levelDownRecurse
-    # en processPage
+                    
+        return siteListPlayers
     
     def parseTableRowTag( self, aRow, playerRow, pageAddress ):
         tagDataList= aRow.findAll( 'td' ) 
@@ -191,9 +236,9 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         
         self._cols2override= []
         saveList= []
-        assert type( inArg ) == type( list() ), "input must be of type list"
+        assert isinstance( inArg, list ), "input must be of type list"
         for anItem in inArg:
-            assert type( anItem ) == type( tuple() ), "types in list must be tuples"
+            assert isinstance( anItem, tuple ), "types in list must be tuples"
             assert len( anItem ) == 2, "tuple must be of length 2 with column followed by method" 
             assert is_numeric( anItem[0] ), "First input must be numeric"
             str( type( anItem[ self._colOverrideMethodIdx ]) ) == "<class 'method'>", "second element in tuple must be class method"
@@ -210,7 +255,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         return
         
     @abstractmethod # this forces the subclass to define this
-    def _getTableBodyFromTableList( self ):
+    def _setTableBodyFromTableList( self ):
         """Sometimes there could be more than one table in the page, this method should
         find the body for the subclass"""
         return
@@ -244,23 +289,50 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     @abstractproperty # this forces the subclass to define this    
     def _nameRegex( self ):
         """subclass identification string"""
-        
+    
+    @abstractproperty    
+    def _tableHeaderTag( self ):
+        """the html tag of the header data"""
+    
+    @abstractproperty    
+    def _tableSubHeaderTag( self ):
+        """the html tag of sub-header data"""
+
     def getSites( self ):
         return self._sites
     
     def setSites( self, inArg ):
             
-        assert type( inArg ) == type( list() ), "_sites must be a list"
+        assert isinstance( inArg, list ), "_sites must be a list"
         self._sites= inArg
         
     def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
         return re.search( 'NEXT', aTag.text.strip().upper() )
+    
+    def getTblObj( self ):
+        return self._otherTblProcObjs
+    
+    def setTblObj( self, inObjs ):
+        assert isinstance( inObjs, list ), ""
+        for anObj in inObjs:
+            assert isinstance( anObj, ProjTableBase ), "Not the proper type: " + str( anObj )
+            
+        self._otherTblProcObjs= inObjs
+    
+    def getTables( self ):
+        return self._tables
+    
+    def setTables( self, inArg ):
+        assert isinstance( inArg, list )
+        self._tables= inArg
          
     """special override for a column which needs weird parsing"""
     columnMethodOverRide= property( getColumnMethodOverRide, setColumnMethodOverRide )
     
     """The website(s) from which they will get pulled"""
     sites= property( getSites, setSites )
+    otherTblProcObjs= property( getTblObj, setTblObj )
+    tables= property( getTables, setTables )
 
 def is_numeric( inArg ):
     attrs = ['__add__', '__sub__', '__mul__', '__truediv__', '__pow__']

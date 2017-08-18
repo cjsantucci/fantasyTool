@@ -19,8 +19,10 @@ class FFTODAY_QB( ProjTableBase ): # inherit
     _saveCSV= "fflFFTODAY_QB.csv"
     _statColRemap= {"Att":"ATT","Comp":"CMP","Yard":"YDS"}
     _tableColumnNames= [ "PASSING", "RUSHING", "Fantasy" ]
+    _tableHeaderTag= "td"
+    _tableSubHeaderTag= "td"
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         """
         typical constructor for the child classes -- this is really here so the comment
         below won't show up in the docs for this class
@@ -36,15 +38,15 @@ class FFTODAY_QB( ProjTableBase ): # inherit
                                     ( 3, self._pteam )
                                    ]
         
-        super( FFTODAY_QB, self ).__init__() # run base constructor
+        super( FFTODAY_QB, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
     
-    def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
+    def _isnextSiteLink( self, aTag, pageAddress, nextLinkList ):
         tagStr= aTag.text.strip()
         if re.search( "Next Page", tagStr ):
             newLink= pageAddress.split("?")[0] + aTag[ "href" ]
-            nextTableList.append( newLink )
+            nextLinkList.append( newLink )
             
         return False # do not update the list outside
     
@@ -93,34 +95,17 @@ class FFTODAY_QB( ProjTableBase ): # inherit
     
     #"id" in aRow.attrs.keys()
 
-    def _getTableBodyFromTableList( self, tableList ):
+    def _setTableBodyFromTableList( self, tableList ):
         tableBodyList= []
         for aTable in tableList:
             tableRows= aTable.findAll("tr")
             for aRow in tableRows:
                 if len( aRow.attrs ) > 0 and "class" in aRow.attrs.keys() and re.search( "tablehdr", aRow.attrs["class"][0] ):
                     tableBodyList.append( aTable )
-                    return tableBodyList
+                    self.tables= tableBodyList
+                    return
                     
-                    """ Ken here are some notes for you. Python does some fancy things. For instance, it allows what is called subscripting.
-                    In this case When you subscript the object aRow (which is not really a row it's just a tag, but it's a row in many cases for tables it appears)
-                    All it does is accesses the property "attrs" of the object which is actually a dictionary.
-                    
-                    --aRow.attrs["class"] is the same as aRow["class"] because the object was designed this way for convenience.
-                    
-                        >>> type(aRow)
-                        <class 'bs4.element.Tag'>    
-                    
-                        >>> type( aRow.attrs )
-                        <class 'dict'>
-                    
-                    The proper way to check if a field is in a dictionary is to check the keys()--see above
-                    
-                    Since the type of aRow["class"] is a list as seen below we must grab the zeroth element to get the string
-                        >>> type( aRow.attrs["class"] )
-                        <class 'list'>
-                    
-                    """
+
     
 class FFTODAY_RB( FFTODAY_QB ): # inherit
     
@@ -130,11 +115,11 @@ class FFTODAY_RB( FFTODAY_QB ): # inherit
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
     _tableColumnNames= [ "RUSHING", "RECEIVING", "Fantasy" ]
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=20&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
-        super( FFTODAY_RB, self ).__init__() # run base constructor
+        super( FFTODAY_RB, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
     
 class FFTODAY_WR( FFTODAY_QB ): # inherit
@@ -145,11 +130,11 @@ class FFTODAY_WR( FFTODAY_QB ): # inherit
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
     _tableColumnNames= [ "RECEIVING", "RUSHING", "Fantasy" ]
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=30&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
-        super( FFTODAY_WR, self ).__init__() # run base constructor
+        super( FFTODAY_WR, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
     
 class FFTODAY_TE( FFTODAY_QB ): # inherit
@@ -160,11 +145,11 @@ class FFTODAY_TE( FFTODAY_QB ): # inherit
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
     _tableColumnNames= [ "RECEIVING", "Fantasy" ]
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=40&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
-        super( FFTODAY_TE, self ).__init__() # run base constructor
+        super( FFTODAY_TE, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
     
 class FFTODAY_K( FFTODAY_QB ): # inherit
@@ -175,11 +160,11 @@ class FFTODAY_K( FFTODAY_QB ): # inherit
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=80&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
-        super( FFTODAY_K, self ).__init__() # run base constructor
+        super( FFTODAY_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
 
 class FFTODAY_D( FFTODAY_QB ): # inherit
@@ -190,11 +175,11 @@ class FFTODAY_D( FFTODAY_QB ): # inherit
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=99&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
-        super( FFTODAY_D, self ).__init__() # run base constructor
+        super( FFTODAY_D, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
          
 if __name__ == '__main__':

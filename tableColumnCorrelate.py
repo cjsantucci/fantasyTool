@@ -21,25 +21,16 @@ class ColumnCorrelate( object ):
     _nameRegex= None
     
     """Use this tag to search for column widths"""
-    _siteTag= "td"
     
     _statColRemap= None
     _tableColumnNames= None
     
-    def __init__( self, nameRegex= None, columnNames= None, statColRemap= None ):
+    def __init__( self, nameRegex= None, columnNames= None, statColRemap= None, tableHeaderTag= "td", tableSubHeaderTag= "td" ):
         self._nameRegex= nameRegex
-        self._setSiteTag()
+        self._tableHeaderTag= tableHeaderTag
+        self._tableSubHeaderTag= tableSubHeaderTag
         self.tableColumnNames= columnNames
         self._statColRemap= statColRemap
-            
-    def _setSiteTag( self ):
-        if re.search( self._nameRegex, "CBS" ) or re.search( self._nameRegex, "FFTODAY" ):
-            self._setSite= "td"
-        elif re.search( self._nameRegex, "ESPN" ):
-            self._siteTag= "th"
-        else:
-            warnings.warn( "Unhandled Case will default to \"td\" for site: " + self._nameRegex )
-            
     
     def _findCategoryWord( self, col ):
         for aKey in self.columnCategoryToColumnNumber.keys():
@@ -57,7 +48,7 @@ class ColumnCorrelate( object ):
         lastCol= 0
         allCols= []
          
-        for aData in aRow.findAll( self._siteTag ):
+        for aData in aRow.findAll( self._tableHeaderTag ):
             if self.tableColumnNames is None:
                 return
                 
@@ -68,8 +59,8 @@ class ColumnCorrelate( object ):
                 
             newCols= list( np.arange( lastCol+1, lastCol+1+int( cspan ) ) )
             
-            if aData.string is not None and aData.string.upper() in self.tableColumnNames:
-                self.columnCategoryToColumnNumber[ aData.string.upper() ]= newCols
+            if aData.string.strip() is not None and aData.string.strip().upper() in self.tableColumnNames:
+                self.columnCategoryToColumnNumber[ aData.string.strip().upper() ]= newCols
                 allCols= allCols+newCols
                 
             lastCol += int( cspan )
@@ -78,7 +69,7 @@ class ColumnCorrelate( object ):
     
     def _mapCategory2ColumnNums_NoHeader( self, aRow ):
         """This is the case that handles when there is no main header when tableColumnNames is None"""
-        allColData= aRow.findAll( self._siteTag )
+        allColData= aRow.findAll( self._tableHeaderTag )
         newCols= [ idx+1 for idx, anElement in enumerate( allColData ) ]
         
         self.columnCategoryToColumnNumber[ "" ]= newCols
@@ -90,7 +81,7 @@ class ColumnCorrelate( object ):
             self._mapCategory2ColumnNums_NoHeader( aRow )
         
         col= 0
-        for aData in aRow.findAll( "td" ):
+        for aData in aRow.findAll( self._tableSubHeaderTag ):
             col += 1
             if col in self.columnCategoryToColumnNumber[ self.allColsKey ]:
                 self.col2ColumnName[ col ]= aData.text.strip()
@@ -103,11 +94,13 @@ class ColumnCorrelate( object ):
         if inArg is None:
             return
         
-        assert type( inArg ) is type( list() ), "tableColumnNames must be list or type None"
+        assert isinstance( inArg, list ), "tableColumnNames must be list or type None"
         
-        for anItem in inArg:
-            assert type( anItem ) is type( str() ), str(anItem) + " must be type string in tableColumnNames list" 
-            
+        for argListIdx, anItem in enumerate( inArg ):
+            assert isinstance( anItem, str ), str(anItem) + " must be type string in tableColumnNames list"
+            inArg[ argListIdx ]= anItem.upper()
+        
+        
         self._tableColumnNames= inArg
     
     # end setTableColumnNames

@@ -14,8 +14,10 @@ class CBS_Normal( ProjTableBase ): # inherit
     _saveCSV= "fflCBS.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= [ "PASSING","RECEIVING", "RUSHING", "MISC" ]
+    _tableHeaderTag= "td"
+    _tableSubHeaderTag= "td"
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= ["https://www.cbssports.com/fantasy/football/stats/sortable/points/QB/standard/projections/2017/ytd?&print_rows=9999",\
                    "https://www.cbssports.com/fantasy/football/stats/sortable/points/RB/standard/projections/2017/ytd?&print_rows=9999",\
@@ -25,7 +27,7 @@ class CBS_Normal( ProjTableBase ): # inherit
         columnMethodOverRideList= [ ( 1, self._nameAndTeam ),\
                                    ]
         
-        super( CBS_Normal, self ).__init__() # run base constructor
+        super( CBS_Normal, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
     
@@ -71,8 +73,8 @@ class CBS_Normal( ProjTableBase ): # inherit
     
     #"id" in aRow.attrs.keys()
 
-    def _getTableBodyFromTableList( self, tableList ):
-        return tableList.copy()
+    def _setTableBodyFromTableList( self, tableList ):
+        self.tables= tableList.copy()
     
 class CBS_K( CBS_Normal ): # inherit
     
@@ -82,11 +84,11 @@ class CBS_K( CBS_Normal ): # inherit
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "https://www.cbssports.com/fantasy/football/stats/sortable/points/K/standard/projections/2017/ytd" ]
         
-        super( CBS_K, self ).__init__() # run base constructor
+        super( CBS_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
 
 class CBS_D( CBS_Normal ): # inherit
@@ -97,11 +99,11 @@ class CBS_D( CBS_Normal ): # inherit
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
-    def __init__( self ):
+    def __init__( self, **kwargs ):
         
         siteList= [ "https://www.cbssports.com/fantasy/football/stats/sortable/points/DST/standard/projections/2017/ytd" ]
         
-        super( CBS_D, self ).__init__() # run base constructor
+        super( CBS_D, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
 
 if __name__ == '__main__':
