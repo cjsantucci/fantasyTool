@@ -3,6 +3,8 @@ Created on Aug 16, 2017
 @author: Chris 
 
 """
+
+from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 
 class NFG_names( ProjTableBase ):

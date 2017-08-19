@@ -76,14 +76,14 @@ if __name__ == '__main__':
     """Construct the class for processing."""
     tAll2run= [ aClass() for aClass in classes2Construct ]
     
-    """Check the types of the constructed classes"""
+    """Check the types"""
     all2run= []
     for aClassInstance in tAll2run:
         if isinstance( aClassInstance, ProjTableBase ):
             all2run.append( aClassInstance )
         else:
             warnings.warn( "Class not correct type: " + str( aClassInstance ) )
-    
+
     mainParallel( all2run )
     #main( all2run )
     

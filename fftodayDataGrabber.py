@@ -7,6 +7,7 @@ Created on Aug 7, 2017
 @author: Ken
 
 '''
+from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 import re
 
