@@ -7,9 +7,7 @@ Created on Aug 7, 2017
 @author: Ken
 
 '''
-
-import projTableBase
-from projTableBase import ProjTableBase
+from ffl.projTableBase import ProjTableBase
 import re
 
 class FFTODAY_QB( ProjTableBase ): # inherit

@@ -3,7 +3,6 @@ Created on Aug 27, 2016
 
 @author: chris
 '''
-from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 import re
     

@@ -7,14 +7,13 @@ Created on Jul 30, 2017
 from abc import abstractmethod, abstractproperty, ABCMeta
 from bs4 import BeautifulSoup as bs
 import datetime
-from ffl.tableColumnCorrelate import *
+from ffl.tableColumnCorrelate import ColumnCorrelate
 import getpass
 import numpy as np
 import os
 import pandas as pd
 import re
 import requests as rq
-import warnings
 
 class ProjTableBase( object, metaclass= ABCMeta ):
     """
