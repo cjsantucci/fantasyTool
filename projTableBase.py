@@ -23,7 +23,6 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     """
     _finalRemap= {}
     _maxDepth= 50
-    _topList= list()
     _year= datetime.datetime.now().year
     _oCol= None
     columnMethodOverRide= None

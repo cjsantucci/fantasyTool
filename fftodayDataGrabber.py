@@ -154,7 +154,7 @@ class FFTODAY_TE( FFTODAY_QB ): # inherit
 class FFTODAY_K( FFTODAY_QB ): # inherit
     
     _finalRemap= {"FPTS":"PROJECTED_PTS"}
-    _nameRegex= "CBS"
+    _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_K.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
@@ -169,7 +169,7 @@ class FFTODAY_K( FFTODAY_QB ): # inherit
 class FFTODAY_D( FFTODAY_QB ): # inherit
     
     _finalRemap= {"FPTS":"PROJECTED_PTS"}
-    _nameRegex= "CBS"
+    _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_D.csv"
     _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
@@ -182,7 +182,9 @@ class FFTODAY_D( FFTODAY_QB ): # inherit
         self.sites= siteList
          
 if __name__ == '__main__':
-    oFFTodayList= [ FFTODAY_QB(), FFTODAY_RB(), FFTODAY_WR(), FFTODAY_TE(), FFTODAY_K(), FFTODAY_D() ]
+    #oFFTodayList= [ FFTODAY_QB(), FFTODAY_RB(), FFTODAY_WR(), FFTODAY_TE(), FFTODAY_K(), FFTODAY_D() ]
+    oFFTodayList= [ FFTODAY_D(), FFTODAY_K(), FFTODAY_QB(), FFTODAY_RB(), FFTODAY_TE(), FFTODAY_WR()  ]
+#    oFFTodayList= [ FFTODAY_WR() ]
     outputList= []
     for anObj in oFFTodayList:
         outputList += anObj.process( save2csv= True )
