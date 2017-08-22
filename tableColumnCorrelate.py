@@ -15,17 +15,17 @@ class ColumnCorrelate( object ):
     
     """
     allColsKey= "allcols_found"
-    col2ColumnCategory= {}
-    col2ColumnName= {}
-    columnCategoryToColumnNumber= {}
-    _nameRegex= None
     
     """Use this tag to search for column widths"""
     
-    _statColRemap= None
-    _tableColumnNames= None
-    
     def __init__( self, nameRegex= None, columnNames= None, statColRemap= None, tableHeaderTag= "td", tableSubHeaderTag= "td" ):
+        
+        self.col2ColumnCategory= {}
+        self.col2ColumnName= {}
+        self.columnCategoryToColumnNumber= {}
+        self._statColRemap= None
+        self._tableColumnNames= None
+        
         self._nameRegex= nameRegex
         self._tableHeaderTag= tableHeaderTag
         self._tableSubHeaderTag= tableSubHeaderTag
@@ -59,7 +59,8 @@ class ColumnCorrelate( object ):
                 
             newCols= list( np.arange( lastCol+1, lastCol+1+int( cspan ) ) )
             
-            if aData.string.strip() is not None and aData.string.strip().upper() in self.tableColumnNames:
+            if aData.string.strip() != "" and aData.string.strip() is not None and \
+                aData.string.strip().upper() in self.tableColumnNames:
                 self.columnCategoryToColumnNumber[ aData.string.strip().upper() ]= newCols
                 allCols= allCols+newCols
                 

@@ -1,4 +1,8 @@
 """
+
+Modified on Aug 18, 2017
+@author: Ken
+
 Created on Aug 16, 2017
 @author: Chris 
 
@@ -22,8 +26,7 @@ class NFG_names( ProjTableBase ):
         
         columnMethodOverRideList= [ ( 1, self._pname ) ]
         
-#         siteList= [ "https://www.numberfire.com/nfl/fantasy/remaining-projections/qb" ]
-        super( NFG_names, self ).__init__( **kwargs ) # run base constructor
+        super( NF_names, self ).__init__( **kwargs ) # run base constructor
         self.columnMethodOverRide= columnMethodOverRideList
 
     def _pname( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
@@ -74,26 +77,27 @@ class NFG_names( ProjTableBase ):
     
     #"id" in aRow.attrs.keys()
 
-class NFG_QB( NFG_names ): # inherit
+class NF_QB( NF_names ): # inherit
     
     """Other positions should inherit from this"""
     
-    _saveCSV= "numberFire.csv"
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_QB.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "PASSING", "RUSHING" ]
-    _otherTblProcObjs= [ NFG_names() ]
+    _otherTblProcObjs= [ NF_names() ]
     
     def __init__( self, **kwargs ):
         columnMethodOverRideList= [ ( 2, self._CI ),\
-                                    ( 5, self._CA )
+                                    ( 5, self._passCompAttOverrid )
                                   ]
 
         siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/qb"]
-        super( NFG_QB, self ).__init__( **kwargs ) # run base constructor
+        super( NF_QB, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
         
-    def _CA( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
+    def _passCompAttOverrid( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
         text= aTag.text.strip()
         playerDict["PASSING_CMP"]= projTableBase.attemptFloatParse( text.split("/")[0] )
         playerDict["PASSING_ATT"]= projTableBase.attemptFloatParse( text.split("/")[1] )
@@ -128,9 +132,109 @@ class NFG_QB( NFG_names ): # inherit
             return True
         else:
             return False 
+class NF_RB( NF_QB ): # inherit
+    
+    """Other positions should inherit from this"""
+    
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_RB.csv"
+    _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
+    _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
+    _otherTblProcObjs= [ NF_names() ]
+    
+    def __init__( self, **kwargs ):
+        columnMethodOverRideList= [ ( 2, self._CI ) ]
+
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/rb"]
+        super( NF_RB, self ).__init__( **kwargs ) # run base constructor
+        self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
+
+class NF_WR( NF_QB ): # inherit
+    
+    """Other positions should inherit from this"""
+    
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_WR.csv"
+    _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
+    _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
+    _otherTblProcObjs= [ NF_names() ]
+    
+    def __init__( self, **kwargs ):
+        columnMethodOverRideList= [ ( 2, self._CI ) ]
+
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/wr"]
+        super( NF_WR, self ).__init__( **kwargs ) # run base constructor
+        self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
+
+class NF_TE( NF_QB ): # inherit
+    
+    """Other positions should inherit from this"""
+    
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_TE.csv"
+    _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
+    _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
+    _otherTblProcObjs= [ NF_names() ]
+    
+    def __init__( self, **kwargs ):
+        columnMethodOverRideList= [ ( 2, self._CI ) ]
+
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/te"]
+        super( NF_TE, self ).__init__( **kwargs ) # run base constructor
+        self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
+
+class NF_K( NF_QB ): # inherit
+    
+    """Other positions should inherit from this"""
+    
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_K.csv"
+    _statColRemap= {"XPM":"XP_MADE","FGA":"FG_ATT","FGM":"FG_MADE",\
+                    "0-19":"0-19_MADE","20-29":"20-29_MADE","30-39":"30-39_MADE",\
+                    "40-49":"40-49_MADE","50+":"50+_MADE"}
+                
+    _tableColumnNames= [ "numberFire", "Kicking", "FG Made By Distance" ]
+    _otherTblProcObjs= [ NF_names() ]
+    
+    def __init__( self, **kwargs ):
+        columnMethodOverRideList= [ ( 2, self._CI ),\
+                                    ( 4, self._parseOverride ),\
+                                    ( 5, self._parseOverride ),\
+                                    ( 6, self._parseOverride ),\
+                                    ( 7, self._parseOverride ),\
+                                    ( 8, self._parseOverride ),\
+                                    ( 9, self._parseOverride ),\
+                                  ]
+
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/rb"]
+        super( NF_K, self ).__init__( **kwargs ) # run base constructor
+        self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
+
+class NF_D( NF_QB ): # inherit
+    
+    """Other positions should inherit from this"""
+    
+    _finalRemap= {"FP":"PROJECTED_PTS"}
+    _saveCSV= "numberFire_D.csv"
+    _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
+    _tableColumnNames= [ "numberFire", "Defense" ]
+    _otherTblProcObjs= [ NF_names() ]
+    
+    def __init__( self, **kwargs ):
+        columnMethodOverRideList= [ ( 2, self._CI )
+                                  ]
+
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/d"]
+        super( NF_D, self ).__init__( **kwargs ) # run base constructor
+        self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
          
 if __name__ == '__main__':
-    oNFList= [ NFG_QB() ]
+    oNFList= [ NF_QB(), NF_RB(), NF_WR(), NF_TE(), NF_K(), NF_D() ]
     outputList= []
     for anObj in oNFList:
         outputList += anObj.process( save2csv= True )
