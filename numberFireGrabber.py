@@ -11,7 +11,7 @@ Created on Aug 16, 2017
 from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 
-class NFG_names( ProjTableBase ):
+class NF_names( ProjTableBase ):
     
     _nameRegex= "numberfire"
     _saveCSV= None
@@ -39,14 +39,14 @@ class NFG_names( ProjTableBase ):
         playerDict["POSITION"]= teamAndPos[0]
         playerDict["TEAM"]= teamAndPos[1]
 
-    def _isTableHead( self, aRow ):
+    def _isTableHead( self, aRow, rowIdx ):
         if not self._headerFound:
             self._headerFound= True
             return True
         else:
             return False
     
-    def _isTableSubHead( self, aRow ):
+    def _isTableSubHead( self, aRow, rowIdx ):
         if not self._subHeaderFound:
             self._subHeaderFound= True
             return True
@@ -66,10 +66,10 @@ class NFG_names( ProjTableBase ):
         return False # do not update the list outside
     
     # each table is different so we over-ride this method from the base
-    def _isTableHeadOfNoConcern( self, aRow ):
+    def _isTableHeadOfNoConcern( self, aRow, rowIdx ):
         return False
     
-    def _isPlayerRow( self, aRow ):
+    def _isPlayerRow( self, aRow, rowIdx ):
         if "data-row-index" in aRow.attrs.keys():
             return True
         else:
@@ -115,7 +115,7 @@ class NF_QB( NF_names ): # inherit
                     return
     
         
-    def _isTableHead( self, aRow ):
+    def _isTableHead( self, aRow, rowIdx ):
         thList= aRow.findAll("th")
         if len( thList ) > 0 and thList[0].text.strip() == "numberFire":
             self._headerFound= True
@@ -123,7 +123,7 @@ class NF_QB( NF_names ): # inherit
         else:
             return False
     
-    def _isTableSubHead( self, aRow ):
+    def _isTableSubHead( self, aRow, rowIdx ):
         if self._headerFound == False:
             return
         
@@ -200,16 +200,10 @@ class NF_K( NF_QB ): # inherit
     _otherTblProcObjs= [ NF_names() ]
     
     def __init__( self, **kwargs ):
-        columnMethodOverRideList= [ ( 2, self._CI ),\
-                                    ( 4, self._parseOverride ),\
-                                    ( 5, self._parseOverride ),\
-                                    ( 6, self._parseOverride ),\
-                                    ( 7, self._parseOverride ),\
-                                    ( 8, self._parseOverride ),\
-                                    ( 9, self._parseOverride ),\
+        columnMethodOverRideList= [ ( 2, self._CI )
                                   ]
 
-        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/rb"]
+        siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/k"]
         super( NF_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
@@ -234,6 +228,7 @@ class NF_D( NF_QB ): # inherit
         self.columnMethodOverRide= columnMethodOverRideList
          
 if __name__ == '__main__':
+    #oNFList= [ NF_K(), NF_D() ]
     oNFList= [ NF_QB(), NF_RB(), NF_WR(), NF_TE(), NF_K(), NF_D() ]
     outputList= []
     for anObj in oNFList:

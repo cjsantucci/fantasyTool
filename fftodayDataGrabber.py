@@ -62,10 +62,10 @@ class FFTODAY_QB( ProjTableBase ): # inherit
         playerDict["TEAM"]= aTag.text.strip()
     
     # each table is different so we over-ride this method from the base
-    def _isTableHeadOfNoConcern( self, aRow ):
+    def _isTableHeadOfNoConcern( self, aRow, rowIdx ):
         return False
     
-    def _isTableHead( self, aRow ):
+    def _isTableHead( self, aRow, rowIdx ):
         
         if "class" in aRow.attrs.keys() and re.search( "tablehdr", aRow.attrs["class"][0] ):
             return True
@@ -74,14 +74,14 @@ class FFTODAY_QB( ProjTableBase ): # inherit
     
         
     
-    def _isTableSubHead( self, aRow ):
+    def _isTableSubHead( self, aRow, rowIdx ):
         
         if "class" in aRow.attrs.keys() and re.search( "tableclmhdr", aRow.attrs["class"][0] ):
             return True
         else:
             return False
     
-    def _isPlayerRow( self, aRow ):
+    def _isPlayerRow( self, aRow, rowIdx ):
         tdList= aRow.findAll( "td" )
         if len( tdList ) >0 and \
             "class" in tdList[0].attrs.keys() and \

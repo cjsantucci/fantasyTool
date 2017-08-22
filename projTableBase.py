@@ -166,14 +166,14 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         playerRows= self.tables[0].findAll("tr")
         playerRow = 0
         siteListPlayers= []
-        for aRow in playerRows :
-            if self._isTableHeadOfNoConcern( aRow ):
+        for rowIdx, aRow in enumerate( playerRows ):
+            if self._isTableHeadOfNoConcern( aRow, rowIdx ):
                 pass
-            elif self._isTableHead( aRow ):
+            elif self._isTableHead( aRow, rowIdx ):
                 self._oCol._mapCategory2ColumnNums( aRow )
-            elif self._isTableSubHead( aRow ):
+            elif self._isTableSubHead( aRow, rowIdx ):
                 self._oCol._mapColumns2Category( aRow )
-            elif self._isPlayerRow( aRow ):
+            elif self._isPlayerRow( aRow, rowIdx ):
                 playerRow += 1
                 playerDict= self.parseTableRowTag( aRow, playerRow, pageAddress )
                 playerDict["WEBSITE"]= pageAddress

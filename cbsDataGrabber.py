@@ -47,7 +47,7 @@ class CBS_Normal( ProjTableBase ): # inherit
                 playerDict["POSITION"]= tSplit[1]
     
     # each table is different so we over-ride this method from the base
-    def _isTableHeadOfNoConcern( self, aRow ):
+    def _isTableHeadOfNoConcern( self, aRow, rowIdx ):
         out= False
         if hasattr( aRow, "class" ):
             classListOfTableRow= aRow["class"]
@@ -58,16 +58,16 @@ class CBS_Normal( ProjTableBase ): # inherit
         else:
             return False
     
-    def _isTableHead( self, aRow ):
+    def _isTableHead( self, aRow, rowIdx ):
         outBool = aRow["class"] == ["row1"] and \
              "id" in aRow.attrs.keys() and aRow["id"] == "special"
     
         return outBool
     
-    def _isTableSubHead( self, aRow ):
+    def _isTableSubHead( self, aRow, rowIdx ):
         return aRow["class"] == ["label"]
     
-    def _isPlayerRow( self, aRow ):
+    def _isPlayerRow( self, aRow, rowIdx ):
         return re.search( 'row[0-9]*', aRow["class"][0] )
     
     #"id" in aRow.attrs.keys()

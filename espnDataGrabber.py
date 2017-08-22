@@ -67,16 +67,16 @@ class ESPN_Normal( ProjTableBase ): # inherit
             playerDict["POSITION"]= tmp2[1].strip()
     
     # each table is different so we over-ride this method from the base
-    def _isTableHeadOfNoConcern( self, aRow ):
+    def _isTableHeadOfNoConcern( self, aRow, rowIdx ):
         return False
     
-    def _isTableSubHead( self, aRow ):
+    def _isTableSubHead( self, aRow, rowIdx ):
         return "playerTableBgRowSubhead" in aRow["class"]
     
-    def _isPlayerRow( self, aRow ):
+    def _isPlayerRow( self, aRow, rowIdx ):
         return "pncPlayerRow" in aRow["class"]
 
-    def _isTableHead( self, aRow ):
+    def _isTableHead( self, aRow, rowIdx ):
         return "playerTableBgRowHead" in aRow["class"]
 
     def _setTableBodyFromTableList( self, tableList ):
