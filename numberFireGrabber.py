@@ -31,7 +31,7 @@ class NF_names( ProjTableBase ):
 
     def _pname( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
         tList= aTag.text.strip().split("\n")
-        playerDict["PLAYER"]= tList[0]
+        playerDict["NAME"]= tList[0]
         
         teamAndPos= tList[2].strip().replace( " ", "" )
         teamAndPos= teamAndPos.replace( "(", "" )

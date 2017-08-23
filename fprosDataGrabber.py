@@ -104,7 +104,7 @@ class FPROS_RB( FPROS_QB ): # inherit
     _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_RB.csv"
-    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
+    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
     _tableColumnNames= [ "RUSHING", "RECEIVING", "Fantasy" ]
     
     def __init__( self, **kwargs ):
@@ -119,7 +119,7 @@ class FPROS_WR( FPROS_QB ): # inherit
     _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_WR.csv"
-    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
+    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
     _tableColumnNames= [ "RECEIVING", "RUSHING", "Fantasy" ]
     
     def __init__( self, **kwargs ):
@@ -134,7 +134,7 @@ class FPROS_TE( FPROS_QB ): # inherit
     _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_TE.csv"
-    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
+    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
     _tableColumnNames= [ "RECEIVING", "Fantasy" ]
     
     def __init__( self, **kwargs ):

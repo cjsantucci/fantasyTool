@@ -17,13 +17,18 @@ class Auction( ComputeData ):
     def process( self ):
         super( Auction, self ).process()
         self.pData.loc[ self.pData.POSITION == "TE", "POSITION" ]= "WR"
+        self.wrExtraSort()
+        print()
     
     def wrExtraSort( self ):
         pData= self.pData
         for aSite in sorted( list( pData["SITE_REGEX"].unique() ) ):
-            lAll= np.logical_and( pData["SITE_REGEX"] == aSite, pData["POSITION"] == "WR" ) 
-            tData= posData[ lSite ]
-            tData= tData.sort_values( by= meanField, ascending= False )
+            lAll= np.logical_and( pData["SITE_REGEX"] == aSite, pData["POSITION"] == "WR" )
+            tData= pData.loc[ lAll ]
+            tDataSort= tData.sort_values( ["computed_projected"], ascending= False )
+            tDataSort= tDataSort.reset_index()
+            tDataSort.index= list(tData.index)
+            pData.loc[ lAll ]= tDataSort
         
 if __name__ == '__main__':
     oAuction= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )

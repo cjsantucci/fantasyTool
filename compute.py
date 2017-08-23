@@ -76,19 +76,21 @@ class ComputeData( object, metaclass= ABCMeta ):
         pData= self.pData
         podi= self._pointsDict
         
-        proj= pData["RUSHING_TD"]*podi["RUSHING_TD"] + \
-        pData["RUSHING_YDS"]*podi["rushing_pts_per_yards"] + \
+        temp= pData.fillna(0)
+        
+        proj= temp["RUSHING_TD"]*podi["RUSHING_TD"] + \
+        temp["RUSHING_YDS"]*podi["rushing_pts_per_yards"] + \
         \
-        pData["PASSING_TD"]*podi["PASSING_TD"] + \
-        pData["PASSING_YDS"]*podi["passing_pts_per_yards"]+ \
-        pData["PASSING_INT"]* podi["PASSING_INT"]+ \
+        temp["PASSING_TD"]*podi["PASSING_TD"] + \
+        temp["PASSING_YDS"]*podi["passing_pts_per_yards"]+ \
+        temp["PASSING_INT"]* podi["PASSING_INT"]+ \
         \
-        pData["RECEIVING_TD"]*podi["RECEIVING_TD"] + \
-        pData["RECEIVING_YDS"]*podi["passing_pts_per_yards"]
+        temp["RECEIVING_TD"]*podi["RECEIVING_TD"] + \
+        temp["RECEIVING_YDS"]*podi["passing_pts_per_yards"]
         
         
         notD= np.logical_and( pData["POSITION"] != "DST",  pData["POSITION"] != "K")
-        self.pData.loc[notD,"computed_projected"]= proj[notD]
+        pData.loc[notD,"computed_projected"]= proj[notD]
         
 #     def processBinomial_onManyYards( self ):
 #         

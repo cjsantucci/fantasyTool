@@ -11,9 +11,12 @@ import inspect
 from multiprocessing import Pool
 import os
 import re
+import traceback
 import warnings
+from ffl.espnDataGrabber import ESPN_Normal
 
 def main( all2run ):
+    
     outputList= []
     for anObject in all2run:
         tOutput= anObject.process()
@@ -22,9 +25,9 @@ def main( all2run ):
     save( outputList )    
 
 def save( outputList ):
+    
     fflData= pd.DataFrame( outputList )
     fflData.to_csv( "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
-#     fflData.to_hdf( "/home/chris/Desktop/fflOutput/fflAll_2017.h5", key="fflData" )
 
 def mainParallel( all2run ):
     with Pool( processes= 4 ) as p:
@@ -46,11 +49,10 @@ def load_h5():
 def load_csv():
     fflData= pd.read_csv("/home/chris/Desktop/fflOutput/fflAll_2017.csv", key="fflData")
     
-if __name__ == '__main__':
-    #load_h5()
-    #load_csv()
+def runAllDynamic():
+
     all2run= []
-    
+
     """ Get the names of any .py file that ends in Grabber.py"""
     packageObject= inspect.getmodule( ffl )
     packageDir= os.path.dirname( packageObject.__file__ )
@@ -65,16 +67,21 @@ if __name__ == '__main__':
     
     
     """Grab all of the class objects excluding specific ones"""
-    exclusionClassList= [ "NFG_names", "ProjTableBase" ]
+    exclusionClassList= [ "NF_names", "ProjTableBase" ]
     classes2Construct=[]
     for aModuleName in importModuleNames:
         moduleMembers= inspect.getmembers( import_module( aModuleName ) )
-        for aModuleName, aModuleObject  in moduleMembers:
-            if inspect.isclass( aModuleObject ) and aModuleName not in exclusionClassList:
+        for moduleMemberName, aModuleObject  in moduleMembers:
+            if inspect.isclass( aModuleObject ) and moduleMemberName not in exclusionClassList:
                 classes2Construct.append( aModuleObject )
     
     """Construct the class for processing."""
-    tAll2run= [ aClass() for aClass in classes2Construct ]
+    tAll2run= []
+    for aClass in classes2Construct:
+        try:
+            tAll2run.append( aClass() )
+        except:
+            traceback.print_exc()
     
     """Check the types"""
     all2run= []
@@ -83,10 +90,12 @@ if __name__ == '__main__':
             all2run.append( aClassInstance )
         else:
             warnings.warn( "Class not correct type: " + str( aClassInstance ) )
-
+        
     mainParallel( all2run )
-    #main( all2run )
     
     print("---------------------All Complete---------------------")
+
+if __name__ == '__main__':
+    runAllDynamic()
     
     
