@@ -13,10 +13,10 @@ import re
 
 class FFTODAY_QB( ProjTableBase ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
+    _finalRemap= { "FANTASY_FPTS": "PROJECTED_PTS", "FPTS": "PROJECTED_PTS" }
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_QB.csv"
-    _statColRemap= {"Att":"ATT","Comp":"CMP","Yard":"YDS"}
+    _statColRemap= {"Comp":"CMP", "Yard":"YDS", "RECPT":"REC" }
     _tableColumnNames= [ "PASSING", "RUSHING", "Fantasy" ]
     _tableHeaderTag= "td"
     _tableSubHeaderTag= "td"
@@ -52,14 +52,15 @@ class FFTODAY_QB( ProjTableBase ): # inherit
     def _pname( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
         playerDict["NAME"]= aTag.text.strip()
         playerDict["POSITION_RANK"]= rowNum
-        
-        myName= self.__class__
-        # get class from my own name.
-        reMatch= re.match( ".*([a-zA-Z]+)", str( myName ).split("_")[-1] )
-        playerDict["POSITION"]= reMatch.group()
     
     def _pteam( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
-        playerDict["TEAM"]= aTag.text.strip()
+        playerDict["TEAM"]= self._retrieveConditionedTeamName( aTag.text.strip() )
+        
+        nameTypeStr= self._nameType()
+        if nameTypeStr == "D":
+            playerDict["POSITION"]= self._retrCondDName( nameTypeStr )
+        else:
+            playerDict["POSITION"]= nameTypeStr
     
     # each table is different so we over-ride this method from the base
     def _isTableHeadOfNoConcern( self, aRow, rowIdx ):
@@ -106,7 +107,6 @@ class FFTODAY_QB( ProjTableBase ): # inherit
 
 class FFTODAY_RB( FFTODAY_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_RB.csv"
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
@@ -121,10 +121,8 @@ class FFTODAY_RB( FFTODAY_QB ): # inherit
     
 class FFTODAY_WR( FFTODAY_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_WR.csv"
-    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
     _tableColumnNames= [ "RECEIVING", "RUSHING", "Fantasy" ]
     
     def __init__( self, **kwargs ):
@@ -136,10 +134,8 @@ class FFTODAY_WR( FFTODAY_QB ): # inherit
     
 class FFTODAY_TE( FFTODAY_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_TE.csv"
-    _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC"}
     _tableColumnNames= [ "RECEIVING", "Fantasy" ]
     
     def __init__( self, **kwargs ):
@@ -151,10 +147,8 @@ class FFTODAY_TE( FFTODAY_QB ): # inherit
     
 class FFTODAY_K( FFTODAY_QB ): # inherit
     
-    _finalRemap= {"FPTS":"PROJECTED_PTS"}
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_K.csv"
-    _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
     def __init__( self, **kwargs ):
@@ -164,25 +158,25 @@ class FFTODAY_K( FFTODAY_QB ): # inherit
         super( FFTODAY_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
 
-class FFTODAY_D( FFTODAY_QB ): # inherit
+class FFTODAY_D( FFTODAY_K ): # inherit
     
-    _finalRemap= {"FPTS":"PROJECTED_PTS"}
     _nameRegex= "FFTODAY"
     _saveCSV= "fflFFTODAY_D.csv"
-    _statColRemap= {"YD":"YDS","RECPT":"REC" }
     _tableColumnNames= None
     
     def __init__( self, **kwargs ):
         
+        columnMethodOverRideList= [ ( 2, super( FFTODAY_D, self )._pteam ) ]
         siteList= [ "http://fftoday.com/rankings/playerproj.php?Season=2017&PosID=99&LeagueID=1&order_by=FFPts&sort_order=DESC&cur_page=0" ]
         
         super( FFTODAY_D, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
+        self.columnMethodOverRide= columnMethodOverRideList
          
 if __name__ == '__main__':
     #oFFTodayList= [ FFTODAY_QB(), FFTODAY_RB(), FFTODAY_WR(), FFTODAY_TE(), FFTODAY_K(), FFTODAY_D() ]
     oFFTodayList= [ FFTODAY_D(), FFTODAY_K(), FFTODAY_QB(), FFTODAY_RB(), FFTODAY_TE(), FFTODAY_WR()  ]
-#    oFFTodayList= [ FFTODAY_WR() ]
+#     oFFTodayList= [ FFTODAY_WR() ]
     outputList= []
     for anObj in oFFTodayList:
         outputList += anObj.process( save2csv= True )

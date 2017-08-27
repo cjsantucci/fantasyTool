@@ -56,14 +56,14 @@ class ESPN_Normal( ProjTableBase ): # inherit
         if re.search( "D/ST", aTag.text ):
             playerDict["POSITION"] = "DST"
             tmp= aTag.text.split(" ")
-            playerDict["TEAM"]= tmp[0]
+            playerDict["TEAM"]= self._retrieveConditionedTeamName( tmp[0] )
         else:
             tmp= aTag.text.split(",")
             playerDict["NAME"]= tmp[0].strip()
             if len( tmp ) < 2:
                 print()
             tmp2= tmp[1].split('\xa0')
-            playerDict["TEAM"]= tmp2[0].strip()
+            playerDict["TEAM"]= self._retrieveConditionedTeamName( tmp2[0].strip() )
             playerDict["POSITION"]= tmp2[1].strip()
     
     # each table is different so we over-ride this method from the base

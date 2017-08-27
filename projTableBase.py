@@ -14,6 +14,65 @@ import os
 import pandas as pd
 import re
 import requests as rq
+from nltk.sem.chat80 import city
+
+def initConditionedTeamNameDict():
+    """ Make sure lots of possible team names come out to something consistent each time """
+    """ Second one in the tuple pairs is the actual name. """
+    
+    
+    nameCityPairs= [ ( "Arizona Cardinals", "Cardinals"), ( "Denver Broncos", "Broncos" ), ( "Kansas City Chiefs", "Chiefs" ), \
+      ( "Philadelphia Eagles", "Eagles" ), ( "Miami Dolphins", "Dolphins" ), ( "New England Patriots", "Patriots" ), \
+      ( "Seattle Seahawks", "Seahawks" ), ( "Green Bay Packers", "Packers" ), ( "New York Giants", "Giants" ), \
+      ( "Carolina Panthers", "Panthers" ), ( "Los Angeles Chargers", "Chargers" ), ( "Jacksonville Jaguars", "Jaguars" ), \
+      ( "Tampa Bay Buccaneers", "Buccaneers" ), ( "Minnesota Vikings", "Vikings" ), ( "Houston Texans", "Texans" ), \
+      ( "Washington Redskins", "Redskins" ), ( "Pittsburgh Steelers", "Steelers" ), ( "Buffalo Bills", "Bills" ), \
+      ( "Los Angeles Rams", "Rams" ), ( "Indianapolis Colts", "Colts" ), ( "Baltimore Ravens", "Ravens" ), \
+      ( "Oakland Raiders", "Raiders" ), ( "Tennessee Titans", "Titans" ), ( "Atlanta Falcons", "Falcons" ), \
+      ( "Dallas Cowboys", "Cowboys" ), ( "Cincinnati Bengals", "Bengals" ), ( "Detroit Lions", "Lions" ), \
+      ( "San Francisco 49ers", "49ers" ), ( "New Orleans Saints", "Saints" ), ( "Chicago Bears", "Bears" ), \
+      ( "Cleveland Browns", "Browns" ), ( "New York Jets", "Jets" ) ]
+    
+    # the city names could be identifiers
+    cityNameList= []
+    for cityName, name in nameCityPairs:
+        city= " ".join( cityName.strip().split()[0:-1] )
+        cityNameList.append( ( city, name ) )
+    
+    abbrevPairs= [ ( "GB", "Packers" ), ( "NE", "Patriots" ), \
+      ( "NO", "Saints" ), ( "TB", "Buccaneers" ), ( "SEA", "Seahawks" ), \
+      ( "ATL", "Falcons" ), ( "IND", "Colts" ), ( "LAC", "Chargers" ), ( "TEN", "Titans" ), ( "DET", "Lions" ), \
+      ( "HOU", "Texans" ), ( "PIT", "Steelers" ), ( "CAR", "Panthers" ), ( "CIN", "Bengals" ), ( "DAL", "Cowboys" ), \
+      ( "WAS", "Redskins" ), ( "OAK", "Raiders" ), ( "NYG", "Giants" ), ( "ARI", "Cardinals" ), ( "PHI", "Eagles" ), \
+      ( "BUF", "Bills" ), ( "KC", "Chiefs" ), ( "BAL", "Ravens" ), ( "MIN", "Vikings" ), ( "MIA", "Dolphins" ), \
+      ( "DEN", "Broncos" ), ( "CHI", "Bears" ), ( "LAR", "Rams" ), ( "SF", "49ers" ), ( "JAC", "Jaguars" ), \
+      ( "NYJ", "Jets" ), ( "CLE", "Browns" ), ( "WSH", "Redskins" ), ( "Jax", "Jaguars" ) ]
+    
+    # special cases
+    l2= [ ( "FA", "FreeAgent" ) ]
+    
+    totList= nameCityPairs+ abbrevPairs+ cityNameList+ l2
+    
+    willbeKeys, names= zip( *totList )
+    willbeKeys= list( willbeKeys )
+    names= list( names )
+    
+    unqNames= []
+    [ unqNames.append( aName.upper() ) 
+        for aName in names 
+        if aName.upper() not in unqNames ]
+
+    nameDict= {}
+    for nameidx, aKey in enumerate( willbeKeys ):
+        nameDict[ aKey.upper() ]= names[ nameidx ].upper()
+    
+    for aKey in unqNames:
+        nameDict[ aKey.upper() ]= aKey.upper()
+    
+    nTeams= 32
+    assert len( unqNames ) == nTeams + len( l2 )
+    
+    return nameDict
 
 class ProjTableBase( object, metaclass= ABCMeta ):
     """
@@ -33,6 +92,8 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     _multiTableJoinMethod= "rowbyrow"
     _user= getpass.getuser()
     _tables= None
+    _condTeamDict= initConditionedTeamNameDict()
+    _condDefenseNameDict= { "D":"DST", "DST":"DST" }
 
     def __init__( self, **kwargs  ):
         """
@@ -185,9 +246,10 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         """ Remap all of the fields if necessary"""
         for aPlayerDict in siteListPlayers:
             for aKey in self._finalRemap.keys():
-                if aKey in aPlayerDict:
-                    aPlayerDict[ self._finalRemap[ aKey ] ]= aPlayerDict[ aKey ]
-                    del aPlayerDict[ aKey ]
+                tKey= aKey.upper()
+                if tKey in aPlayerDict:
+                    aPlayerDict[ self._finalRemap[ aKey ] ]= aPlayerDict[ tKey ]
+                    del aPlayerDict[ tKey ]
                     
         return siteListPlayers
     
@@ -209,7 +271,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
                     categoryWord= self._oCol.col2ColumnCategory[ colCount ]
                     colName= self._oCol.col2ColumnName[ colCount ]
                     
-                    saveKey= colName
+                    saveKey= colName.upper()
                     if saveKey in self._statColRemap.keys():
                         saveKey= self._statColRemap[ colName ]
                     
@@ -246,6 +308,34 @@ class ProjTableBase( object, metaclass= ABCMeta ):
                 saveList.append( anItem )
             
         self._columnMethodOverRide= saveList
+    
+    def _retrCondDName( self, inName ):
+        inName= inName.strip().upper()
+    
+        assert inName in self._condDefenseNameDict.keys(), str( self ) + " does not contain key: " + inName + " for defense str name"
+        
+        return self._condDefenseNameDict[ inName ]
+    
+    def _retrieveConditionedTeamName( self, inName ):
+        inName= inName.strip().upper()
+#         if not inName in nameDict.keys():
+#             print( inName )
+#         if not nameDict[ inName ] in unqNames:
+#             print( nameDict[ inName ]  )
+            
+        assert inName in self._condTeamDict.keys(), str( self ) + " does not contain key: " + inName + " for team name"
+        
+        return self._condTeamDict[ inName ]
+    
+    def _nameType( self ):
+        out= None
+    
+        myName= self.__class__
+        # get class from my own name.
+        reMatch= re.match( ".*([a-zA-Z]+)", str( myName ).split("_")[-1] )
+        
+        if reMatch:
+            return reMatch.group()
     
     @abstractmethod # this forces the subclass to define this
     def _isTableHeadOfNoConcern( self ):

@@ -30,7 +30,7 @@ class ColumnCorrelate( object ):
         self._tableHeaderTag= tableHeaderTag
         self._tableSubHeaderTag= tableSubHeaderTag
         self.tableColumnNames= columnNames
-        self._statColRemap= statColRemap
+        self.statColRemap= statColRemap
     
     def _findCategoryWord( self, col ):
         for aKey in self.columnCategoryToColumnNumber.keys():
@@ -70,7 +70,7 @@ class ColumnCorrelate( object ):
     
     def _mapCategory2ColumnNums_NoHeader( self, aRow ):
         """This is the case that handles when there is no main header when tableColumnNames is None"""
-        allColData= aRow.findAll( self._tableHeaderTag )
+        allColData= aRow.findAll( self._tableSubHeaderTag )
         newCols= [ idx+1 for idx, anElement in enumerate( allColData ) ]
         
         self.columnCategoryToColumnNumber[ "" ]= newCols
@@ -85,7 +85,7 @@ class ColumnCorrelate( object ):
         for aData in aRow.findAll( self._tableSubHeaderTag ):
             col += 1
             if col in self.columnCategoryToColumnNumber[ self.allColsKey ]:
-                self.col2ColumnName[ col ]= aData.text.strip()
+                self.col2ColumnName[ col ]= aData.text.strip().upper()
                 self.col2ColumnCategory[ col ]= self._findCategoryWord( col )
                 
     def getTableColumnNames( self ):
@@ -103,7 +103,26 @@ class ColumnCorrelate( object ):
         
         
         self._tableColumnNames= inArg
+        
+    def getStatColRemap( self ):
+        return self._tableColumnNames 
+    
+    def setStatColRemap( self, inArg ):
+        if inArg is None:
+            return
+        
+        assert isinstance( inArg, dict ), "tableColumnNames must be list or type None"
+        
+        for argListIdx, aKey in enumerate( list( inArg.keys() ) ):
+            assert isinstance( inArg[aKey], str ), str( inArg[aKey] ) + " must be type string in statColRemap dict"
+            if aKey != aKey.upper():
+                inArg[ aKey.upper() ]= inArg[ aKey ]
+                del inArg[ aKey ]
+        
+        
+        self._statColRemap= inArg
     
     # end setTableColumnNames
     
+    statColRemap= property( getStatColRemap, setStatColRemap )
     tableColumnNames= property( getTableColumnNames, setTableColumnNames )

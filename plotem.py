@@ -3,9 +3,10 @@ Created on Aug 30, 2016
 
 @author: chris
 '''
+from ffl.auctionLeague import Auction
+from ffl.compute import sortBySitesAndPosition
 import pandas as pd
 import numpy as np
-from ffl.auctionLeague import Auction
 import matplotlib.pyplot as plt
 
 from matplotlib.backends.backend_pdf import PdfPages
@@ -24,13 +25,16 @@ def setupSinglePlot( xlabel= "X", title= "", xlim= None, grid= True ):
     return fig, ax
 
 
-def makePlotsForEach( pData, meanField, computedField ):
+def makePlotsForEach( pData, meanField, meanFieldRank, computedField, unqPos, unqSite= None, plotTextRanks= False ):
+    
+    
+    sortBySitesAndPosition( pData, fields= [ meanField ], \
+                                 ascending= False )
+    
     numPlayers2Plt= 30 
     os.system( " ".join(["rm", "/home/chris/Desktop/fflOutput/2017plots.pdf"])  )
     pp= PdfPages( '/home/chris/Desktop/fflOutput/2017plots.pdf')
-    unqPos= sorted( list( pData["POSITION"].unique() ) )
-    unqPos= [ "QB", "RB", "WR" ]
-    unqPos= [ "WR" ]
+    
     for aPos in unqPos:
         print(aPos)
         posData= pData[ pData["POSITION"] == aPos ]
@@ -49,25 +53,28 @@ def makePlotsForEach( pData, meanField, computedField ):
         dataList.append( list(cpmData[meanField].values.copy()) )
         legList.append( meanField )
     
-        for aSite in sorted( list( posData["SITE_REGEX"].unique() ) ):
+        if unqSite is None:
+            unqSite= sorted( list( posData["SITE_REGEX"].unique() ) )
+        for aSite in unqSite:
             tData= posData[ posData["SITE_REGEX"] == aSite ]
             tData= tData[ 0:numPlayers2Plt ]
-
             plt.plot( np.arange(len(tData.NAME)), tData[computedField], "o" )
             dataList.append( list(tData[computedField].values.copy()) )
             legList.append( aSite + "_" + computedField )
             
             
             if meanField == "PROJECTED_PTS_mean":
-                rankField= "POSITION_RANK"
+                rankField= "site_rank"
             else:
                 rankField= "computed_rank" 
             
-            count= 0
-            for _, row in tData.iterrows():
-                idx= tData.index[count]
-                ax.text(count, tData[computedField][idx], str( int( tData[rankField][idx] ) ) )
-                count += 1
+            if plotTextRanks:
+                count= 0
+                for _, row in tData.iterrows():
+    #                 print(row)
+                    idx= tData.index[count]
+                    ax.text(count, tData[computedField][idx], str( int( tData[rankField][idx] ) ) )
+                    count += 1
 
 #             plt.plot( np.arange(len(tData.NAME)), tData["PROJECTED_PTS"], "o" )
 #             dataList.append( list(tData["PROJECTED_PTS"].values.copy()) )
@@ -95,11 +102,18 @@ def makePlotsForEach( pData, meanField, computedField ):
 
 if __name__ == '__main__':
     
-    obj= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
-    obj.process()
-    pData= obj.pData.copy()
+#     obj= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
+#     obj.process()
+#     pData= obj.pData.copy()
+    pData= pd.read_csv( '/home/chris/Desktop/fflOutput/fflAll_withComputed2017.csv' )
     
-#     makePlotsForEach( pData, "computed_projected_mean", "computed_projected" )
-    makePlotsForEach( pData, "PROJECTED_PTS_mean", "PROJECTED_PTS" )
+    #unqPos= sorted( list( pData["POSITION"].unique() ) )
+    unqPos= [ "WR" ]
+    unqPos= [ "WR", "RB", "QB" ]
+    unqSite= None
+#     unqSite= ["FFTODAY"]
+    
+    makePlotsForEach( pData, "computed_projected_mean", "computed_projected_mean_rank" , "computed_projected", unqPos, unqSite )
+#     makePlotsForEach( pData, "PROJECTED_PTS_mean", "projected_mean_rank", "PROJECTED_PTS", unqPos, unqSite )
 
     print("Done")

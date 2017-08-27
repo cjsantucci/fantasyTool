@@ -40,25 +40,59 @@ class ComputeData( object, metaclass= ABCMeta ):
         self.processNormal()
         self.processKickers()
         self.processD()
-        self.computeMeans()
-        self.computeComputedRank()
-
-    def computeComputedRank( self ):
-        pass
     
-    def computeMeans( self ):
+        self.computeMeanProjected()
+        self.computeRanks()
+    
+    def computeRanks( self ):
+        """Store the index as it was in the website before we start sorting stuff around"""
+        
+        pData= self.pData
+        
+        unqPos= list( pData["POSITION"].unique() )
+        unqSite= list( pData["SITE_REGEX"].unique() )
+        for aSite in unqSite:
+            for aPos in unqPos:
+                lAll= np.logical_and( pData["POSITION"] == aPos, pData["SITE_REGEX"] == aSite )
+                
+                tmpTable= pData.loc[ lAll ]
+                pData.loc[lAll,"site_rank"]= tmpTable.reset_index().index+1
+                
+                tmpTable= pData.loc[ lAll ]
+                tmpTable= tmpTable.sort_values( "computed_projected" , ascending= False )
+                pData.loc[ tmpTable.index, "computed_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
+                
+                tmpTable= pData.loc[ lAll ]
+                tmpTable= tmpTable.sort_values( "computed_projected_mean" , ascending= False )
+                pData.loc[ tmpTable.index, "computed_projected_mean_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
+                
+                tmpTable= pData.loc[ lAll ]
+                tmpTable= tmpTable.sort_values( "PROJECTED_PTS_mean" , ascending= False )
+                pData.loc[ tmpTable.index, "projected_mean_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
+        
+    
+    def computeMeanProjected( self ):
+        """ compute the means for each player as projected by league points"""
+        
         pData= self.pData
         
         unqPos= list( pData["POSITION"].unique() )
         for aPos in unqPos:
             lPos= pData["POSITION"] == aPos 
-            unqPlayer= list( pData.loc[ lPos, "NAME" ].unique() ) 
+            
+            if aPos == "DST":
+                fieldStr= "TEAM"
+            else:
+                fieldStr= "NAME"
+             
+            unqPlayer= list( pData.loc[ lPos, fieldStr ].unique() )
             for aPlayer in unqPlayer:
-                lPlayer= pData["NAME"] == aPlayer
+                lPlayer= pData[ fieldStr ] == aPlayer
                 lAll= np.logical_and( lPos, lPlayer )
                 
                 pData.loc[lAll, 'computed_projected_mean']= pData.loc[lAll, "computed_projected" ].mean()
                 pData.loc[lAll, 'PROJECTED_PTS_mean']= pData.loc[lAll, "PROJECTED_PTS" ].mean()
+
 #               
     def processD( self ):
         pData= self.pData
@@ -92,9 +126,24 @@ class ComputeData( object, metaclass= ABCMeta ):
         notD= np.logical_and( pData["POSITION"] != "DST",  pData["POSITION"] != "K")
         pData.loc[notD,"computed_projected"]= proj[notD]
         
-#     def processBinomial_onManyYards( self ):
-#         
-#         n, p = 16, 
+def sortBySitesAndPosition( pData, fields= None, positions= None, ascending= False ):
+    """ Sort position groups for each site by whatever field requested """
+    
+    assert isinstance( pData, pd.DataFrame ), "pData must be pandas DataFrame"
+    assert isinstance( fields, list ), "fields must be a list of fields to sort"
+    
+    if positions is None:
+        positions= sorted( pData["POSITION"].unique() )
+        
+    for aSite in sorted( list( pData["SITE_REGEX"].unique() ) ):
+        for aPosition in positions:
+            lAll= np.logical_and( pData["SITE_REGEX"] == aSite, pData["POSITION"] == aPosition )
+            tData= pData.loc[ lAll ]
+            tDataSort= tData.sort_values( fields , ascending= ascending )
+            tDataSort.reset_index()
+            tDataSort.index= list(tData.index)
+            pData.loc[ lAll ]= tDataSort    
+            
     
 if __name__ == '__main__':
     oComp= ComputeData( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )

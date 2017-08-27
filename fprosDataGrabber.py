@@ -4,12 +4,13 @@ Created on Aug 13, 2017
 @author: Ken
 
 '''
+from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 import re
 
 class FPROS_QB( ProjTableBase ): # inherit
     
-    _finalRemap= {"FPTS":"PROJECTED_PTS"}
+    _finalRemap= {"MISC_FPTS":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_QB.csv"
     _statColRemap= {"TDS":"TD","INTS":"INT"}
@@ -51,19 +52,19 @@ class FPROS_QB( ProjTableBase ): # inherit
         
         myName= self.__class__
         # get class from my own name.
-        reMatch= re.match( ".*([a-zA-Z]+)", str( myName ).split("_")[-1] )
-        playerDict["POSITION"]= reMatch.group()        
+        reMatch= re.match( ".*([a-zA-Z]+)", str( myName ).split("_")[-1] )        
         
         tList= aTag.text.strip().split()
 
+        playerDict["POSITION_RANK"]= rowNum
         l= len( tList )
         if reMatch.group() != "D":
             playerDict["NAME"]= " ".join( tList[0:l-1] )
-            playerDict["TEAM"]= tList[l-1]
-            playerDict["POSITION_RANK"]= rowNum
+            playerDict["TEAM"]= self._retrieveConditionedTeamName( tList[l-1] )
+            playerDict["POSITION"]= reMatch.group()
         else: # 2
-            playerDict["TEAM"]= " ".join( tList[0:2] )
-            playerDict["POSITION_RANK"]= rowNum
+            playerDict["TEAM"]= self._retrieveConditionedTeamName( " ".join( tList ) )
+            playerDict["POSITION"]= "DST"
         
         
 
@@ -101,11 +102,10 @@ class FPROS_QB( ProjTableBase ): # inherit
                     
 class FPROS_RB( FPROS_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_RB.csv"
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
-    _tableColumnNames= [ "RUSHING", "RECEIVING", "Fantasy" ]
+    _tableColumnNames= [ "RUSHING", "RECEIVING", "Fantasy", "MISC" ]
     
     def __init__( self, **kwargs ):
         
@@ -116,11 +116,10 @@ class FPROS_RB( FPROS_QB ): # inherit
     
 class FPROS_WR( FPROS_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_WR.csv"
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
-    _tableColumnNames= [ "RECEIVING", "RUSHING", "Fantasy" ]
+    _tableColumnNames= [ "RECEIVING", "RUSHING", "Fantasy", "MISC" ]
     
     def __init__( self, **kwargs ):
         
@@ -131,11 +130,10 @@ class FPROS_WR( FPROS_QB ): # inherit
     
 class FPROS_TE( FPROS_QB ): # inherit
     
-    _finalRemap= {"FPts":"PROJECTED_PTS"}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_TE.csv"
     _statColRemap= {"Att":"ATT","Yard":"YDS","Rec":"REC", "TDS":"TD"}
-    _tableColumnNames= [ "RECEIVING", "Fantasy" ]
+    _tableColumnNames= [ "RECEIVING", "Fantasy", "MISC" ]
     
     def __init__( self, **kwargs ):
         
@@ -146,10 +144,10 @@ class FPROS_TE( FPROS_QB ): # inherit
     
 class FPROS_K( FPROS_QB ): # inherit
     
-    _finalRemap= {"FPTS":"PROJECTED_PTS"}
+    _finalRemap= {}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_K.csv"
-    _statColRemap= {"YD":"YDS","RECPT":"REC" }
+    _statColRemap= {"FG":"FG","FGA":"FGA","XPT":"XPT","FPTS":"PROJECTED_PTS",}
     _tableColumnNames= None
     
     def __init__( self, **kwargs ):
@@ -158,13 +156,30 @@ class FPROS_K( FPROS_QB ): # inherit
         
         super( FPROS_K, self ).__init__( **kwargs ) # run base constructor
         self.sites= siteList
+        
+    def _isTableHead( self, aRow, rowIdx ):
+        return False
 
-class FPROS_D( FPROS_QB ): # inherit
+    def _isTableSubHead( self, aRow, rowIdx ):
+        if rowIdx == 0:
+            return True
+        else:
+            return False
     
-    _finalRemap= {"FPTS":"PROJECTED_PTS"}
+    def _isPlayerRow( self, aRow, rowIdx ):
+        if rowIdx > 0:
+            return True
+        else:
+            return False
+
+class FPROS_D( FPROS_K ): # inherit
+    
+    _finalRemap= {}
     _nameRegex= "FantasyPROs"
     _saveCSV= "fflFPROS_D.csv"
-    _statColRemap= {"YD":"YDS","RECPT":"REC" }
+    _statColRemap= {"SACK":"SACK","INT":"INT","FR":"FR", \
+                    "TD":"TD","ASSIST":"ASSIST","SAFETY":"SAFETY", \
+                    "PA":"PA","YDS AGN":"YDS AGN", "FPTS":"PROJECTED_PTS"}
     _tableColumnNames= None
     
     def __init__( self, **kwargs ):
@@ -176,6 +191,7 @@ class FPROS_D( FPROS_QB ): # inherit
          
 if __name__ == '__main__':
     oFantasyPROsList= [ FPROS_QB(), FPROS_RB(), FPROS_WR(), FPROS_TE(), FPROS_K(), FPROS_D() ]
+    oFantasyPROsList= [ FPROS_WR() ]
     outputList= []
     for anObj in oFantasyPROsList:
         outputList += anObj.process( save2csv= True )

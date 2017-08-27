@@ -13,6 +13,7 @@ from ffl.projTableBase import ProjTableBase
 
 class NF_names( ProjTableBase ):
     
+    _finalRemap= { "NUMBERFIRE_FP": "PROJECTED_PTS" }
     _nameRegex= "numberfire"
     _saveCSV= None
     _statColRemap= None
@@ -36,8 +37,23 @@ class NF_names( ProjTableBase ):
         teamAndPos= tList[2].strip().replace( " ", "" )
         teamAndPos= teamAndPos.replace( "(", "" )
         teamAndPos= teamAndPos.replace( ")", "" ).split(",")
-        playerDict["POSITION"]= teamAndPos[0]
-        playerDict["TEAM"]= teamAndPos[1]
+        
+        if teamAndPos[0] == "D":
+            playerDict["POSITION"]= self._retrCondDName( teamAndPos[0] )
+            playerDict["TEAM"]= self._retrieveConditionedTeamName( " ".join( playerDict["NAME"].split()[0:-1] ) )
+        elif teamAndPos[0] == "K":
+            playerDict["POSITION"]= teamAndPos[0]
+            if teamAndPos[1] == "LA":
+                playerDict["TEAM"]= self._retrieveConditionedTeamName( "Rams" )
+            else:
+                playerDict["TEAM"]= self._retrieveConditionedTeamName( teamAndPos[1] )
+        else:
+            playerDict["POSITION"]= teamAndPos[0]
+            if teamAndPos[1] == "LA":
+                playerDict["TEAM"]= self._retrieveConditionedTeamName( "Rams" )
+            else:
+                playerDict["TEAM"]= self._retrieveConditionedTeamName( teamAndPos[1] )
+        
 
     def _isTableHead( self, aRow, rowIdx ):
         if not self._headerFound:
@@ -81,7 +97,6 @@ class NF_QB( NF_names ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_QB.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "PASSING", "RUSHING" ]
@@ -136,7 +151,6 @@ class NF_RB( NF_QB ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_RB.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
@@ -154,7 +168,6 @@ class NF_WR( NF_QB ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_WR.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
@@ -172,7 +185,6 @@ class NF_TE( NF_QB ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_TE.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "RUSHING", "RECEIVING" ]
@@ -190,7 +202,6 @@ class NF_K( NF_QB ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_K.csv"
     _statColRemap= {"XPM":"XP_MADE","FGA":"FG_ATT","FGM":"FG_MADE",\
                     "0-19":"0-19_MADE","20-29":"20-29_MADE","30-39":"30-39_MADE",\
@@ -212,7 +223,6 @@ class NF_D( NF_QB ): # inherit
     
     """Other positions should inherit from this"""
     
-    _finalRemap= {"FP":"PROJECTED_PTS"}
     _saveCSV= "numberFire_D.csv"
     _statColRemap= {"Ints":"INT","Yds":"YDS","Att":"ATT","TDs":"TD"}
     _tableColumnNames= [ "numberFire", "Defense" ]

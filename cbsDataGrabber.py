@@ -3,6 +3,7 @@ Created on Aug 27, 2016
 
 @author: chris
 '''
+from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
 import re
     
@@ -37,7 +38,7 @@ class CBS_Normal( ProjTableBase ): # inherit
     def _nameAndTeam( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
         tsplit= aTag.text.split(",")
         playerDict["NAME"]= tsplit[0]
-        playerDict["TEAM"]= tsplit[1]
+        playerDict["TEAM"]= self._retrieveConditionedTeamName( tsplit[1].strip() )
         playerDict["POSITION_RANK"]= rowNum
         
         checkListPositions= [ "points/QB", "points/RB", "points/WR", "points/TE", "points/K", "points/DST"  ]
