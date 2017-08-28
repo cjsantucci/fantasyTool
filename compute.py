@@ -56,20 +56,40 @@ class ComputeData( object, metaclass= ABCMeta ):
                 lAll= np.logical_and( pData["POSITION"] == aPos, pData["SITE_REGEX"] == aSite )
                 
                 tmpTable= pData.loc[ lAll ]
-                pData.loc[lAll,"site_rank"]= tmpTable.reset_index().index+1
+                rankArray= tmpTable.reset_index().index+1
+                pData.loc[lAll,"projected_rank"]= rankArray.astype(float)
                 
                 tmpTable= pData.loc[ lAll ]
                 tmpTable= tmpTable.sort_values( "computed_projected" , ascending= False )
-                pData.loc[ tmpTable.index, "computed_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
+                rankArray= np.arange( 0, len( tmpTable.index ) )+1
+                pData.loc[ tmpTable.index, "computed_rank" ]= rankArray.astype(float) 
                 
-                tmpTable= pData.loc[ lAll ]
-                tmpTable= tmpTable.sort_values( "computed_projected_mean" , ascending= False )
-                pData.loc[ tmpTable.index, "computed_projected_mean_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
                 
-                tmpTable= pData.loc[ lAll ]
-                tmpTable= tmpTable.sort_values( "PROJECTED_PTS_mean" , ascending= False )
-                pData.loc[ tmpTable.index, "projected_mean_rank" ]= np.arange( 0, len( tmpTable.index ) )+1
-        
+#                 tmpTable= pData.loc[ lAll ]
+#                 tmpTable= tmpTable.sort_values( "computed_projected_mean" , ascending= False )
+#                 rankArray= np.arange( 0, len( tmpTable.index ) )+1
+#                 pData.loc[ tmpTable.index, "computed_projected_mean_rank" ]= rankArray.astype(float) 
+#                 
+#                 tmpTable= pData.loc[ lAll ]
+#                 tmpTable= tmpTable.sort_values( "PROJECTED_PTS_mean" , ascending= False )
+#                 rankArray= np.arange( 0, len( tmpTable.index ) )+1
+#                 pData.loc[ tmpTable.index, "projected_mean_rank" ]= rankArray.astype(float) 
+                
+        unqPos= list( pData["POSITION"].unique() )
+        for aPos in unqPos:
+            if aPos == "DST":
+                pField= "TEAM"
+            else:
+                pField= "NAME"
+            
+            unqPlayer= list( pData[ pField ].unique() )
+            
+            for aPlayer in unqPlayer:
+                lAll= np.logical_and( pData["POSITION"] == aPos, pData[ pField ] == aPlayer )
+                pData.loc[ lAll , "projected_mean_rank" ]= pData.loc[ lAll , "projected_rank" ].mean()
+                pData.loc[ lAll , "computed_projected_mean_rank" ]= pData.loc[ lAll , "computed_rank" ].mean()
+                
+                
     
     def computeMeanProjected( self ):
         """ compute the means for each player as projected by league points"""

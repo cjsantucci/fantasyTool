@@ -37,7 +37,7 @@ class CBS_Normal( ProjTableBase ): # inherit
     
     def _nameAndTeam( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
         tsplit= aTag.text.split(",")
-        playerDict["NAME"]= tsplit[0]
+        playerDict["NAME"]= self._conditionNameStr( tsplit[0] )
         playerDict["TEAM"]= self._retrieveConditionedTeamName( tsplit[1].strip() )
         playerDict["POSITION_RANK"]= rowNum
         

@@ -50,7 +50,7 @@ class FFTODAY_QB( ProjTableBase ): # inherit
         return False # do not update the list outside
     
     def _pname( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
-        playerDict["NAME"]= aTag.text.strip()
+        playerDict["NAME"]= self._conditionNameStr( aTag.text.strip() )
         playerDict["POSITION_RANK"]= rowNum
     
     def _pteam( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):

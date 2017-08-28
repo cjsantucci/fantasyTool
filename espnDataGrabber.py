@@ -59,7 +59,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
             playerDict["TEAM"]= self._retrieveConditionedTeamName( tmp[0] )
         else:
             tmp= aTag.text.split(",")
-            playerDict["NAME"]= tmp[0].strip()
+            playerDict["NAME"]= self._conditionNameStr( tmp[0].strip() )
             if len( tmp ) < 2:
                 print()
             tmp2= tmp[1].split('\xa0')

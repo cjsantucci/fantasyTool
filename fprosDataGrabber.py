@@ -59,7 +59,7 @@ class FPROS_QB( ProjTableBase ): # inherit
         playerDict["POSITION_RANK"]= rowNum
         l= len( tList )
         if reMatch.group() != "D":
-            playerDict["NAME"]= " ".join( tList[0:l-1] )
+            playerDict["NAME"]= self._conditionNameStr( " ".join( tList[0:l-1] ) )
             playerDict["TEAM"]= self._retrieveConditionedTeamName( tList[l-1] )
             playerDict["POSITION"]= reMatch.group()
         else: # 2

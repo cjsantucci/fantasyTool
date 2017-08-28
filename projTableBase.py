@@ -81,7 +81,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     
     """
     _finalRemap= {}
-    _maxDepth= 50
+    _maxDepth= 2
     _year= datetime.datetime.now().year
     _oCol= None
     columnMethodOverRide= None
@@ -316,6 +316,15 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         
         return self._condDefenseNameDict[ inName ]
     
+    def _conditionNameStr( self, inName ):
+        inName= inName.upper().strip()
+        inName= inName.replace( "SR.", "" ).strip()
+        inName= inName.replace( "JR.", "" ).strip()
+        inName= inName.replace( "ROBERT", "ROB" ).strip()
+        inName= inName.replace( "*", "" ).strip()
+        
+        return inName
+    
     def _retrieveConditionedTeamName( self, inName ):
         inName= inName.strip().upper()
 #         if not inName in nameDict.keys():
@@ -341,7 +350,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     def _isTableHeadOfNoConcern( self ):
         """Checks if the table is part of the header for each subclass"""
         return
-        
+
     @abstractmethod # this forces the subclass to define this
     def _setTableBodyFromTableList( self ):
         """Sometimes there could be more than one table in the page, this method should
