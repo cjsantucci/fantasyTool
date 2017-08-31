@@ -153,7 +153,7 @@ class ESPN_K( ESPN_Normal ): # inherit
           
          
 if __name__ == '__main__':
-    oESPNList= [ ESPN_Normal(), ESPN_D(), ESPN_K() ]
-    outputList= []
-    for anObj in oESPNList:
-        outputList += anObj.process( save2csv= True )
+#     classInstancesList= [ ESPN_Normal(), ESPN_D(), ESPN_K() ]
+#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
+    outputList= projTableBase.executeClassMain()
+    

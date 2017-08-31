@@ -34,11 +34,6 @@ def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos
         numPlayers2Plt= 30 
         asc= False
     
-#     sortBySitesAndPosition( pData, fields= [ meanField ], \
-#                                  ascending= asc )
-    
-    os.system( " ".join(["rm", "/home/chris/Desktop/fflOutput/2017plots.pdf"])  )
-    
     for aPos in unqPos:
         print(aPos)
         
@@ -119,9 +114,9 @@ def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos
         legList.append( meanField )
         
         if aPos == "K" or aPos == "DST":
-            ax.legend(legList, bbox_to_anchor=(0.3, 0.8))
+            ax.legend(legList, bbox_to_anchor=(0.5, 0.8))
         else:            
-            ax.legend(legList, bbox_to_anchor=(0.8, 0.8))
+            ax.legend(legList, bbox_to_anchor=(0.5, 0.8))
         
         mins= list( np.array(dataList).transpose().min(axis=1) )
         count= 0
@@ -137,7 +132,7 @@ def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos
                 yLabelShift= 2
                 
             txtHandle= ax.text(count, mins[count]-yLabelShift, textStrPlot,\
-                    rotation= 90)
+                    rotation= 90, fontsize= 7)
             count += 1
             
         pp.savefig( f )
@@ -147,6 +142,7 @@ if __name__ == '__main__':
 #     obj= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
 #     obj.process()
 #     pData= obj.pData.copy()
+    os.system( " ".join(["rm", "/home/chris/Desktop/fflOutput/2017plots.pdf"])  )
     pData= pd.read_csv( '/home/chris/Desktop/fflOutput/fflAll_withComputed2017.csv' )
     
     pp= PdfPages( '/home/chris/Desktop/fflOutput/2017plots.pdf' )
@@ -160,8 +156,8 @@ if __name__ == '__main__':
 #     unqSite= ["FFTODAY"]
     makePlotsForEach( pp, pData, "computed_projected_mean", "computed_projected_mean_rank" , "computed_projected", unqPos, unqSite, player= player )
     
-    unqPos= [ "DST"  ]
-    makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
+#     unqPos= [ "DST"  ]
+#     makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
 #     makePlotsForEach( pData, "PROJECTED_PTS_mean", "projected_mean_rank", "PROJECTED_PTS", unqPos, unqSite )
     pp.close()
 

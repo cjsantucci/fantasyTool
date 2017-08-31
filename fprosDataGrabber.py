@@ -190,9 +190,7 @@ class FPROS_D( FPROS_K ): # inherit
         self.sites= siteList
          
 if __name__ == '__main__':
-    oFantasyPROsList= [ FPROS_QB(), FPROS_RB(), FPROS_WR(), FPROS_TE(), FPROS_K(), FPROS_D() ]
-    oFantasyPROsList= [ FPROS_WR() ]
-    outputList= []
-    for anObj in oFantasyPROsList:
-        outputList += anObj.process( save2csv= True )
+#     classInstancesList= [ FPROS_QB(), FPROS_RB(), FPROS_WR(), FPROS_TE(), FPROS_K(), FPROS_D() ]
+#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
+    outputList= projTableBase.executeClassMain()
     

@@ -174,10 +174,7 @@ class FFTODAY_D( FFTODAY_K ): # inherit
         self.columnMethodOverRide= columnMethodOverRideList
          
 if __name__ == '__main__':
-    #oFFTodayList= [ FFTODAY_QB(), FFTODAY_RB(), FFTODAY_WR(), FFTODAY_TE(), FFTODAY_K(), FFTODAY_D() ]
-    oFFTodayList= [ FFTODAY_D(), FFTODAY_K(), FFTODAY_QB(), FFTODAY_RB(), FFTODAY_TE(), FFTODAY_WR()  ]
-#     oFFTodayList= [ FFTODAY_WR() ]
-    outputList= []
-    for anObj in oFFTodayList:
-        outputList += anObj.process( save2csv= True )
+#     classInstancesList= [ FFTODAY_D(), FFTODAY_K(), FFTODAY_QB(), FFTODAY_RB(), FFTODAY_TE(), FFTODAY_WR()  ]
+#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
+    outputList= projTableBase.executeClassMain()
     

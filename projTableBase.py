@@ -7,14 +7,18 @@ Created on Jul 30, 2017
 from abc import abstractmethod, abstractproperty, ABCMeta
 from bs4 import BeautifulSoup as bs
 import datetime
+import ffl
 from ffl.tableColumnCorrelate import ColumnCorrelate
 import getpass
+from importlib import import_module
+import inspect
 import numpy as np
 import os
 import pandas as pd
 import re
 import requests as rq
-from nltk.sem.chat80 import city
+import traceback
+import warnings
 
 def initConditionedTeamNameDict():
     """ Make sure lots of possible team names come out to something consistent each time """
@@ -441,3 +445,65 @@ def attemptFloatParse(strIn):
     except:
         return np.NAN
     
+def getSelfModuleName( levelUp= 1 ):
+    fName= inspect.getouterframes( inspect.currentframe() )[ levelUp ].filename
+    modName= os.path.basename( fName ).split( ".py" )[ 0 ]
+    packageName= os.path.basename( os.path.dirname( fName ) )
+    return packageName + "." + modName
+
+def getAllModules():
+    """ Get the names of any .py file that ends in Grabber.py"""
+    packageObject= inspect.getmodule( ffl )
+    packageDir= os.path.dirname( packageObject.__file__ )
+    listings= os.listdir( packageDir )
+    print("retrieving all names which end in Grabber.py ...")
+    full_files= [ os.path.join( packageDir, aListing ) for aListing in listings 
+            if os.path.isfile( os.path.join( packageDir, aListing ) ) and 
+             os.path.join( packageDir, aListing ).endswith(".py") and
+             re.search( ".*Grabber\.py$" , aListing ) ]
+    
+    importModuleNames= [ "ffl." + os.path.split( aName )[-1].split( ".py" )[0] for aName in full_files ]
+    return importModuleNames
+
+def executeClassMain( classInstancesList= None, save2csv= True ):
+    """ INtended to be called from main of a Grabber.py """
+    if classInstancesList is None:
+        classInstancesList= getClassInstances( levelUp= 3 )
+        
+    outputList= []
+    for anObj in classInstancesList:
+        outputList += anObj.process( save2csv= save2csv )
+        
+    return outputList
+
+def getClassInstances( importModuleNames= None, levelUp= 2 ):
+    """ Get all instances for a set of modules """
+    if importModuleNames is None:
+        importModuleNames= [ getSelfModuleName( levelUp= levelUp ) ]
+    
+    """Grab all of the class objects excluding specific ones"""
+    exclusionClassList= [ "NF_names", "ProjTableBase" ]
+    classes2Construct=[]
+    for aModuleName in importModuleNames:
+        moduleMembers= inspect.getmembers( import_module( aModuleName ) )
+        for moduleMemberName, aModuleObject  in moduleMembers:
+            if inspect.isclass( aModuleObject ) and moduleMemberName not in exclusionClassList:
+                classes2Construct.append( aModuleObject )
+    
+    """Construct the class for processing."""
+    tAll2run= []
+    for aClass in classes2Construct:
+        try:
+            tAll2run.append( aClass() )
+        except:
+            traceback.print_exc()
+    
+    """Check the types"""
+    all2run= []
+    for aClassInstance in tAll2run:
+        if isinstance( aClassInstance, ProjTableBase ):
+            all2run.append( aClassInstance )
+        else:
+            warnings.warn( "Class not correct type: " + str( aClassInstance ) )
+    
+    return all2run

@@ -140,7 +140,7 @@ class ComputeData( object, metaclass= ABCMeta ):
         temp["PASSING_INT"]* podi["PASSING_INT"]+ \
         \
         temp["RECEIVING_TD"]*podi["RECEIVING_TD"] + \
-        temp["RECEIVING_YDS"]*podi["passing_pts_per_yards"]
+        temp["RECEIVING_YDS"]*podi["receiving_pts_per_yards"]
         
         
         notD= np.logical_and( pData["POSITION"] != "DST",  pData["POSITION"] != "K")

@@ -107,8 +107,7 @@ class CBS_D( CBS_Normal ): # inherit
         self.sites= siteList
 
 if __name__ == '__main__':
-    oCBSList= [ CBS_Normal(), CBS_D(), CBS_K() ]
-    outputList= []
-    for anObj in oCBSList:
-        outputList += anObj.process( save2csv= True )
+#     classInstancesList= [ CBS_Normal(), CBS_D(), CBS_K() ]
+#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
+    outputList= projTableBase.executeClassMain()
     

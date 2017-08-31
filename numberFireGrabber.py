@@ -10,6 +10,7 @@ Created on Aug 16, 2017
 
 from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
+import inspect
 
 class NF_names( ProjTableBase ):
     
@@ -75,7 +76,6 @@ class NF_names( ProjTableBase ):
             if "class" in aTable.attrs.keys():
                 if "projection-table" in aTable["class"] and 'projection-table--fixed' in aTable["class"]:
                     self.tables= [ aTable ]
-                    return
                     
 
     def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
@@ -238,9 +238,7 @@ class NF_D( NF_QB ): # inherit
         self.columnMethodOverRide= columnMethodOverRideList
          
 if __name__ == '__main__':
-    #oNFList= [ NF_K(), NF_D() ]
-    oNFList= [ NF_QB(), NF_RB(), NF_WR(), NF_TE(), NF_K(), NF_D() ]
-    outputList= []
-    for anObj in oNFList:
-        outputList += anObj.process( save2csv= True )
+#     classInstancesList= [ NF_QB(), NF_RB(), NF_WR(), NF_TE(), NF_K(), NF_D() ]
+#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
+    outputList= projTableBase.executeClassMain()
     
