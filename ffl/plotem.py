@@ -20,19 +20,13 @@ def setupSinglePlot( xlabel= "X", title= "", xlim= None, grid= True ):
     if xlim is not None:
         ax.set_xlim( xlim )
     ax.set_xlabel( xlabel )
-    ax.set_ylabel( "projections" )
     
     return fig, ax
 
 
 def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos, unqSite= None, plotTextRanks= False, player= None ):
     
-    if "DST" in unqPos and "K" in unqPos:
-        numPlayers2Plt= 32 
-        asc= True
-    else:
-        numPlayers2Plt= 30 
-        asc= False
+    numPlayers2Plt= 32
     
     for aPos in unqPos:
         print(aPos)
@@ -41,124 +35,76 @@ def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos
             nameStr= "TEAM"
         else:
             nameStr= "NAME"
-        
+            
+        if aPos == "DST" or aPos == "K":
+            asc= True
+            ylabelStr= "position rank"
+        else:
+            asc= False
+            ylabelStr= "projections"
+            
         posData= pData[ pData["POSITION"] == aPos ]
-        posData= posData.sort_values( by= meanField, ascending= False )
+        posData= posData[[ nameStr, "SITE_REGEX", meanField, computedField ]]
+        pivData= posData.pivot_table( index= [ nameStr, "SITE_REGEX" ] )
+        tmp= pivData.unstack()
+        sortedTabMeanField= tmp[ meanField ].sort_values( "CBS", ascending= asc )
+        sortedTabMeanField= sortedTabMeanField[0:numPlayers2Plt]
+        sortedTabCompField= tmp.loc[ sortedTabMeanField.index ][ computedField ]
+        sortedTabCompField= sortedTabCompField[0:numPlayers2Plt]
         
         f, ax= setupSinglePlot( xlabel= "rank", title= aPos, xlim=[-0.5, numPlayers2Plt] )
+        
+        ax.set_ylabel( "projections" )
         
         plt.show(block= False)
 #         mng = plt.get_current_fig_manager()
 #         mng.window.showMaximized()
-
-        dataList= []
         legList= []
-
-        if aPos == "DST":
-            namesOnlyData= posData.drop_duplicates( nameStr )
-        else:
-            namesOnlyData= posData.drop_duplicates( nameStr )
         
-        namesOnlyData= namesOnlyData.sort_values( meanField, ascending= asc ).reset_index()
-        namesOnlyData= namesOnlyData[0:numPlayers2Plt]
-        namesForPlot= set( namesOnlyData[nameStr] )
-    
-        if unqSite is None:
-            unqSite= sorted( list( posData["SITE_REGEX"].unique() ) )
-        for aSite in unqSite:
-            tData= posData[ posData["SITE_REGEX"] == aSite ]
-            if aPos == "K" or aPos == "DST":
-                tData= tData.sort_values( meanField, ascending= True ).reset_index()
-            else:
-                tData= tData.sort_values( meanField, ascending= False ).reset_index()
-
-            lNames= np.ndarray( shape= (len(tData,)), dtype=bool )
-            for aNameForPlot in namesForPlot:
-                lNames= np.logical_or( lNames, tData[ nameStr ] == aNameForPlot )
-                
-            tData= tData.loc[ lNames ]
-            
-            checkNames= set( tData[ nameStr ] )
-            check1= namesForPlot.difference( checkNames )
-            check2= checkNames.difference( namesForPlot )
-            assert len( check1 ) == 0 and len( check2 ) == 0, "lens do not match logic error--check check1 and check2"
-                
-            plt.plot( np.arange(len(tData.NAME)), tData[computedField], "o", markersize=4 )
-            dataList.append( list(tData[computedField].values.copy()) )
-            legList.append( aSite + "_" + computedField )
-            
-            if meanField == "PROJECTED_PTS_mean":
-                rankField= "projected_rank"
-            else:
-                rankField= "computed_rank" 
-            
-            if plotTextRanks:
-                count= 0
-                for _, row in tData.iterrows():
-    #                 print(row)
-                    idx= tData.index[count]
-                    ax.text(count, tData[computedField][idx], str( int( tData[rankField][idx] ) ) )
-                    count += 1
-
-        # just pick CBS, since the mean is stored in any of them
-        cpmData= posData[ posData["SITE_REGEX"] == "CBS" ]
-        if aPos == "K" or aPos == "DST":
-            cpmData= cpmData.sort_values( meanField, ascending= True )
-        else:
-            cpmData= cpmData.sort_values( meanField, ascending= False ).reset_index()
-        cpmData= cpmData[ 0:numPlayers2Plt ]
+        plt.plot( np.arange(len(sortedTabMeanField)), sortedTabMeanField.CBS, "+" )
         
-        plt.plot( np.arange(len(cpmData.NAME)), cpmData[meanField], "+" )
-        plt.step( np.arange(len(cpmData.NAME)), cpmData[meanField] )
-        dataList.append( list(cpmData[meanField].values.copy()) )
+        plt.step( np.arange(len(sortedTabMeanField)), sortedTabMeanField.CBS )
+        legList.append( meanField )
         legList.append( meanField )
         
+        for aSite in list( sortedTabCompField.columns ):
+            plt.plot( np.arange(len(sortedTabMeanField)), sortedTabCompField[aSite], 'o', markersize= 2 )
+            legList.append( aSite )
+            
         if aPos == "K" or aPos == "DST":
             ax.legend(legList, bbox_to_anchor=(0.5, 0.8))
         else:            
             ax.legend(legList, bbox_to_anchor=(0.5, 0.8))
         
-        mins= list( np.array(dataList).transpose().min(axis=1) )
         count= 0
-        for _, row in cpmData.iterrows():
-            if aPos == "DST":
-                textStrPlot= row.TEAM
-            else:
-                textStrPlot= row.NAME + ", " + row.TEAM
+        yLabelShift= 2
+        for name, row in sortedTabMeanField.iterrows():
             
-            if aPos == "DST" or aPos == "K":
-                yLabelShift= 2
-            else:
-                yLabelShift= 2
-                
-            txtHandle= ax.text(count, mins[count]-yLabelShift, textStrPlot,\
+            tMin= sortedTabCompField.loc[ name ]
+            tMin= min( tMin.values[ np.logical_not( np.isnan( tMin.values ) ) ] )
+            
+            _= ax.text(count, tMin-yLabelShift, name,\
                     rotation= 90, fontsize= 7)
             count += 1
             
         pp.savefig( f )
 
 if __name__ == '__main__':
-    
-#     obj= Auction( csv= "/home/chris/Desktop/fflOutput/fflAll_2017.csv" )
-#     obj.process()
-#     pData= obj.pData.copy()
+
     os.system( " ".join(["rm", "/home/chris/Desktop/fflOutput/2017plots.pdf"])  )
     pData= pd.read_csv( '/home/chris/Desktop/fflOutput/fflAll_withComputed2017.csv' )
     
     pp= PdfPages( '/home/chris/Desktop/fflOutput/2017plots.pdf' )
     
     unqPos= [ "WR", "RB", "QB" ]
-#     unqPos= [ "WR" ]
     unqSite= None
-#     unqSite= [ "ESPN" ]
     player= None
-    #player= "Kelvin Benjamin"
-#     unqSite= ["FFTODAY"]
+
     makePlotsForEach( pp, pData, "computed_projected_mean", "computed_projected_mean_rank" , "computed_projected", unqPos, unqSite, player= player )
     
-#     unqPos= [ "DST"  ]
-#     makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
-#     makePlotsForEach( pData, "PROJECTED_PTS_mean", "projected_mean_rank", "PROJECTED_PTS", unqPos, unqSite )
+    unqPos= [ "K", "DST" ]
+    makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
+    
     pp.close()
 
     print("Done")

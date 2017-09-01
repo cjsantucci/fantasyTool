@@ -1,10 +1,13 @@
+#!/home/chris/anaconda3/bin/python
 '''
 Created on Aug 27, 2016
 
 @author: chris
 '''
-from ffl import projTableBase
+
+import ffl.projTableBase
 from ffl.projTableBase import ProjTableBase
+from ffl import projTableBase
 import re
     
 class CBS_Normal( ProjTableBase ): # inherit
