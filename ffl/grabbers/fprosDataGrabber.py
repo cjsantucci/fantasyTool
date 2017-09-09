@@ -4,7 +4,7 @@ Created on Aug 13, 2017
 @author: Ken
 
 '''
-from ffl import projTableBase
+from ffl import executeClassMain
 from ffl.projTableBase import ProjTableBase
 import re
 
@@ -186,11 +186,11 @@ class FPROS_D( FPROS_K ): # inherit
         
         siteList= [ "https://www.fantasypros.com/nfl/projections/dst.php?week=draft" ]
         
-        super( FPROS_D, self ).__init__( **kwargs ) # run base constructor
+        super().__init__( **kwargs ) # run base constructor
         self.sites= siteList
          
 if __name__ == '__main__':
-#     classInstancesList= [ FPROS_QB(), FPROS_RB(), FPROS_WR(), FPROS_TE(), FPROS_K(), FPROS_D() ]
-#     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
-    outputList= projTableBase.executeClassMain()
+#     classInstancesList= [FPROS_D() ]
+#     outputList= executeClassMain( classInstancesList, save2csv= True )
+    outputList= executeClassMain()
     

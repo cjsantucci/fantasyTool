@@ -3,17 +3,10 @@ Created on Aug 3, 2017
 
 @author: chris
 '''
-import ffl
-from ffl.projTableBase import ProjTableBase, getAllModules, getClassInstances
+from ffl import getAllModules, getClassInstances
 import pandas as pd
-from importlib import import_module
-import inspect
+
 from multiprocessing import Pool
-import os
-import re
-import traceback
-import warnings
-from ffl.espnDataGrabber import ESPN_Normal
 
 def main( all2run ):
     

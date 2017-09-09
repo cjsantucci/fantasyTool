@@ -7,10 +7,8 @@ Created on Aug 16, 2017
 @author: Chris 
 
 """
-
-from ffl import projTableBase
 from ffl.projTableBase import ProjTableBase
-import inspect
+from ffl import attemptFloatParse, executeClassMain
 
 class NF_names( ProjTableBase ):
     
@@ -25,10 +23,10 @@ class NF_names( ProjTableBase ):
     _tableSubHeaderTag= "th"
 
     def __init__( self, **kwargs ):
-        
         columnMethodOverRideList= [ ( 1, self._pname ) ]
         
         super( NF_names, self ).__init__( **kwargs ) # run base constructor
+        self._excludeFromProcTypeCheck= True
         self.columnMethodOverRide= columnMethodOverRideList
 
     def _pname( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
@@ -114,13 +112,13 @@ class NF_QB( NF_names ): # inherit
         
     def _passCompAttOverrid( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
         text= aTag.text.strip()
-        playerDict["PASSING_CMP"]= projTableBase.attemptFloatParse( text.split("/")[0] )
-        playerDict["PASSING_ATT"]= projTableBase.attemptFloatParse( text.split("/")[1] )
+        playerDict["PASSING_CMP"]= attemptFloatParse( text.split("/")[0] )
+        playerDict["PASSING_ATT"]= attemptFloatParse( text.split("/")[1] )
     
     def _CI( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
         text= aTag.text.strip()
-        playerDict["CI_LOWER"]= projTableBase.attemptFloatParse( text.split("-")[0] )
-        playerDict["CI_UPPER"]= projTableBase.attemptFloatParse( text.split("-")[1] )
+        playerDict["CI_LOWER"]= attemptFloatParse( text.split("-")[0] )
+        playerDict["CI_UPPER"]= attemptFloatParse( text.split("-")[1] )
     
     def _setTableBodyFromTableList( self, tableList ):
         for aTable in tableList:
@@ -194,7 +192,7 @@ class NF_TE( NF_QB ): # inherit
         columnMethodOverRideList= [ ( 2, self._CI ) ]
 
         siteList= ["https://www.numberfire.com/nfl/fantasy/remaining-projections/te"]
-        super( NF_TE, self ).__init__( **kwargs ) # run base constructor
+        super( NF_TE, self ).__init__( **kwargs ) # run bexecuteClassMainase constructor
         self.sites= siteList
         self.columnMethodOverRide= columnMethodOverRideList
 
@@ -240,5 +238,5 @@ class NF_D( NF_QB ): # inherit
 if __name__ == '__main__':
 #     classInstancesList= [ NF_QB(), NF_RB(), NF_WR(), NF_TE(), NF_K(), NF_D() ]
 #     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
-    outputList= projTableBase.executeClassMain()
+    outputList= executeClassMain()
     

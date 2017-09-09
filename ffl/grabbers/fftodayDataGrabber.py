@@ -7,7 +7,8 @@ Created on Aug 7, 2017
 @author: Ken
 
 '''
-from ffl import projTableBase
+
+from ffl import executeClassMain
 from ffl.projTableBase import ProjTableBase
 import re
 
@@ -176,5 +177,5 @@ class FFTODAY_D( FFTODAY_K ): # inherit
 if __name__ == '__main__':
 #     classInstancesList= [ FFTODAY_D(), FFTODAY_K(), FFTODAY_QB(), FFTODAY_RB(), FFTODAY_TE(), FFTODAY_WR()  ]
 #     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
-    outputList= projTableBase.executeClassMain()
+    outputList= executeClassMain()
     

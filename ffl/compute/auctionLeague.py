@@ -3,7 +3,7 @@ Created on Aug 3, 2017
 
 @author: chris
 '''
-from ffl.compute import ComputeData, sortBySitesAndPosition
+from ffl.compute.compute import ComputeData, sortBySitesAndPosition
 import numpy as np 
 
 class Auction( ComputeData ):

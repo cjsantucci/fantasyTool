@@ -3,8 +3,6 @@ Created on Aug 30, 2016
 
 @author: chris
 '''
-from ffl.auctionLeague import Auction
-from ffl.compute import sortBySitesAndPosition
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,7 +40,7 @@ def makePlotsForEach( pp, pData, meanField, meanFieldRank, computedField, unqPos
         else:
             asc= False
             ylabelStr= "projections"
-            
+        
         posData= pData[ pData["POSITION"] == aPos ]
         posData= posData[[ nameStr, "SITE_REGEX", meanField, computedField ]]
         pivData= posData.pivot_table( index= [ nameStr, "SITE_REGEX" ] )
@@ -100,10 +98,11 @@ if __name__ == '__main__':
     unqSite= None
     player= None
 
-    makePlotsForEach( pp, pData, "computed_projected_mean", "computed_projected_mean_rank" , "computed_projected", unqPos, unqSite, player= player )
+    makePlotsForEach( pp, pData, "PROJECTED_PTS_mean", "projected_mean_rank" , "PROJECTED_PTS", unqPos, unqSite, player= player )
+#     makePlotsForEach( pp, pData, "computed_projected_mean", "computed_projected_mean_rank" , "computed_projected", unqPos, unqSite, player= player )
     
-    unqPos= [ "K", "DST" ]
-    makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
+#     unqPos= [ "K", "DST" ]
+#     makePlotsForEach( pp, pData, "computed_projected_mean_rank", "computed_projected_mean_rank" , "computed_rank", unqPos, unqSite, player= player )
     
     pp.close()
 

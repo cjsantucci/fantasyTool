@@ -8,6 +8,6 @@ setup(
     author_email = 'cjsantucci@gmail.com',
     license = 'MIT',
     url = 'https://github.com/cjsantucci/fantasyTool/',
-    packages = ['ffl'],
+    packages = [ "ffl", "compute", "grabbers", "vis" ],
     install_requires = []
 )

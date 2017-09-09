@@ -3,7 +3,8 @@ Created on Aug 27, 2016
 
 @author: chris
 '''
-from ffl import projTableBase
+
+from ffl import attemptFloatParse, executeClassMain
 from ffl.projTableBase import ProjTableBase
 import re
     
@@ -23,10 +24,10 @@ class ESPN_Normal( ProjTableBase ): # inherit
                                     ( 2, self._parsePlayerNameData ),\
                                     ( 3, self._passCompAttOverrid ), \
                                    ]
-        siteList= [ "http://games.espn.com/ffl/tools/projections?slotCategoryId=0",\
-                     "http://games.espn.com/ffl/tools/projections?slotCategoryId=2",\
-                     "http://games.espn.com/ffl/tools/projections?slotCategoryId=4",\
-                     "http://games.espn.com/ffl/tools/projections?slotCategoryId=6",\
+        siteList= [ ( "http://games.espn.com/ffl/tools/projections?slotCategoryId=0", "QB" ),\
+                    ( "http://games.espn.com/ffl/tools/projections?slotCategoryId=2", "RB" ),\
+                    ( "http://games.espn.com/ffl/tools/projections?slotCategoryId=4", "WR" ),\
+                    ( "http://games.espn.com/ffl/tools/projections?slotCategoryId=6", "TE" ),\
                      ]
         
         super( ESPN_Normal, self ).__init__( **kwargs ) # run base constructor
@@ -48,7 +49,7 @@ class ESPN_Normal( ProjTableBase ): # inherit
     
         
     def _setRank( self, playerDict, aRow, aTag, rowNum, colNum, site  ):
-        playerDict["POSITION_RANK"]= projTableBase.attemptFloatParse( aTag.text )
+        playerDict["POSITION_RANK"]= attemptFloatParse( aTag.text )
     
     def _parsePlayerNameData( self, playerDict, aRow, aTag, rowNum, colNum, pageAddress ):
         playerLink= aTag.contents
@@ -155,5 +156,5 @@ class ESPN_K( ESPN_Normal ): # inherit
 if __name__ == '__main__':
 #     classInstancesList= [ ESPN_Normal(), ESPN_D(), ESPN_K() ]
 #     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
-    outputList= projTableBase.executeClassMain()
+    outputList= executeClassMain()
     

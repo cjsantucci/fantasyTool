@@ -4,10 +4,8 @@ Created on Aug 27, 2016
 
 @author: chris
 '''
-
-import ffl.projTableBase
+from ffl import  executeClassMain
 from ffl.projTableBase import ProjTableBase
-from ffl import projTableBase
 import re
     
 class CBS_Normal( ProjTableBase ): # inherit
@@ -22,10 +20,10 @@ class CBS_Normal( ProjTableBase ): # inherit
     
     def __init__( self, **kwargs ):
         
-        siteList= ["https://www.cbssports.com/fantasy/football/stats/sortable/points/QB/standard/projections/2017/ytd?&print_rows=9999",\
-                   "https://www.cbssports.com/fantasy/football/stats/sortable/points/RB/standard/projections/2017/ytd?&print_rows=9999",\
-                   "https://www.cbssports.com/fantasy/football/stats/sortable/points/WR/standard/projections/2017/ytd?&print_rows=9999",\
-                   "https://www.cbssports.com/fantasy/football/stats/sortable/points/TE/standard/projections/2017/ytd?&print_rows=9999",\
+        siteList= [ ( "https://www.cbssports.com/fantasy/football/stats/sortable/points/QB/standard/projections/2017/ytd?&print_rows=9999", "QB" ),\
+                   ( "https://www.cbssports.com/fantasy/football/stats/sortable/points/RB/standard/projections/2017/ytd?&print_rows=9999", "RB" ),\
+                   ( "https://www.cbssports.com/fantasy/football/stats/sortable/points/WR/standard/projections/2017/ytd?&print_rows=9999", "WR" ),\
+                   ( "https://www.cbssports.com/fantasy/football/stats/sortable/points/TE/standard/projections/2017/ytd?&print_rows=9999", "TE" ),\
                   ]
         columnMethodOverRideList= [ ( 1, self._nameAndTeam ),\
                                    ]
@@ -112,5 +110,5 @@ class CBS_D( CBS_Normal ): # inherit
 if __name__ == '__main__':
 #     classInstancesList= [ CBS_Normal(), CBS_D(), CBS_K() ]
 #     outputList= projTableBase.executeClassMain( classInstancesList, save2csv= True )
-    outputList= projTableBase.executeClassMain()
+    outputList= executeClassMain()
     

@@ -8,75 +8,13 @@ from abc import abstractmethod, abstractproperty, ABCMeta
 from bs4 import BeautifulSoup as bs
 import datetime
 import ffl
+from ffl import checkFields, retrieveReqFieldList
 from ffl.tableColumnCorrelate import ColumnCorrelate
 import getpass
-from importlib import import_module
-import inspect
-import numpy as np
 import os
 import pandas as pd
 import re
 import requests as rq
-import traceback
-import warnings
-
-def initConditionedTeamNameDict():
-    """ Make sure lots of possible team names come out to something consistent each time """
-    """ Second one in the tuple pairs is the actual name. """
-    
-    
-    nameCityPairs= [ ( "Arizona Cardinals", "Cardinals"), ( "Denver Broncos", "Broncos" ), ( "Kansas City Chiefs", "Chiefs" ), \
-      ( "Philadelphia Eagles", "Eagles" ), ( "Miami Dolphins", "Dolphins" ), ( "New England Patriots", "Patriots" ), \
-      ( "Seattle Seahawks", "Seahawks" ), ( "Green Bay Packers", "Packers" ), ( "New York Giants", "Giants" ), \
-      ( "Carolina Panthers", "Panthers" ), ( "Los Angeles Chargers", "Chargers" ), ( "Jacksonville Jaguars", "Jaguars" ), \
-      ( "Tampa Bay Buccaneers", "Buccaneers" ), ( "Minnesota Vikings", "Vikings" ), ( "Houston Texans", "Texans" ), \
-      ( "Washington Redskins", "Redskins" ), ( "Pittsburgh Steelers", "Steelers" ), ( "Buffalo Bills", "Bills" ), \
-      ( "Los Angeles Rams", "Rams" ), ( "Indianapolis Colts", "Colts" ), ( "Baltimore Ravens", "Ravens" ), \
-      ( "Oakland Raiders", "Raiders" ), ( "Tennessee Titans", "Titans" ), ( "Atlanta Falcons", "Falcons" ), \
-      ( "Dallas Cowboys", "Cowboys" ), ( "Cincinnati Bengals", "Bengals" ), ( "Detroit Lions", "Lions" ), \
-      ( "San Francisco 49ers", "49ers" ), ( "New Orleans Saints", "Saints" ), ( "Chicago Bears", "Bears" ), \
-      ( "Cleveland Browns", "Browns" ), ( "New York Jets", "Jets" ) ]
-    
-    # the city names could be identifiers
-    cityNameList= []
-    for cityName, name in nameCityPairs:
-        city= " ".join( cityName.strip().split()[0:-1] )
-        cityNameList.append( ( city, name ) )
-    
-    abbrevPairs= [ ( "GB", "Packers" ), ( "NE", "Patriots" ), \
-      ( "NO", "Saints" ), ( "TB", "Buccaneers" ), ( "SEA", "Seahawks" ), \
-      ( "ATL", "Falcons" ), ( "IND", "Colts" ), ( "LAC", "Chargers" ), ( "TEN", "Titans" ), ( "DET", "Lions" ), \
-      ( "HOU", "Texans" ), ( "PIT", "Steelers" ), ( "CAR", "Panthers" ), ( "CIN", "Bengals" ), ( "DAL", "Cowboys" ), \
-      ( "WAS", "Redskins" ), ( "OAK", "Raiders" ), ( "NYG", "Giants" ), ( "ARI", "Cardinals" ), ( "PHI", "Eagles" ), \
-      ( "BUF", "Bills" ), ( "KC", "Chiefs" ), ( "BAL", "Ravens" ), ( "MIN", "Vikings" ), ( "MIA", "Dolphins" ), \
-      ( "DEN", "Broncos" ), ( "CHI", "Bears" ), ( "LAR", "Rams" ), ( "SF", "49ers" ), ( "JAC", "Jaguars" ), \
-      ( "NYJ", "Jets" ), ( "CLE", "Browns" ), ( "WSH", "Redskins" ), ( "Jax", "Jaguars" ) ]
-    
-    # special cases
-    l2= [ ( "FA", "FreeAgent" ) ]
-    
-    totList= nameCityPairs+ abbrevPairs+ cityNameList+ l2
-    
-    willbeKeys, names= zip( *totList )
-    willbeKeys= list( willbeKeys )
-    names= list( names )
-    
-    unqNames= []
-    [ unqNames.append( aName.upper() ) 
-        for aName in names 
-        if aName.upper() not in unqNames ]
-
-    nameDict= {}
-    for nameidx, aKey in enumerate( willbeKeys ):
-        nameDict[ aKey.upper() ]= names[ nameidx ].upper()
-    
-    for aKey in unqNames:
-        nameDict[ aKey.upper() ]= aKey.upper()
-    
-    nTeams= 32
-    assert len( unqNames ) == nTeams + len( l2 )
-    
-    return nameDict
 
 class ProjTableBase( object, metaclass= ABCMeta ):
     """
@@ -96,13 +34,15 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     _multiTableJoinMethod= "rowbyrow"
     _user= getpass.getuser()
     _tables= None
-    _condTeamDict= initConditionedTeamNameDict()
     _condDefenseNameDict= { "D":"DST", "DST":"DST" }
+    _allowedProcTypes= [ "QB", "RB", "WR", "TE", "K", "DST" ]
 
     def __init__( self, **kwargs  ):
         """
         Set stuff up for when "process" method is called for all classes
         """
+        self._excludeFromProcTypeCheck= False
+        self._condTeamDict= ffl.initConditionedTeamNameDict()
         
         if self._user == "chris":
             self._saveLocation= "/home/chris/Desktop/fflOutput"
@@ -125,10 +65,11 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         and we will process it in a loop in here
         """
         assert self.sites is not None, "must define sites prior to calling super constructor"
-        
+                
         outputList= []
         for siteIdx , aSite in enumerate( self._sites ):
-            _, levelDownRecurse= self._processPage( self._sites[siteIdx], siteIdx, len( self._sites ), outputList, 0 ) # recursive
+            aSite= self.setProcTypeIfNeeded( aSite )
+            _, _= self._processPage( aSite, siteIdx, len( self._sites ), outputList, 0 ) # recursive
             
         
         if save2csv:
@@ -138,6 +79,18 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         
         return outputList
 
+    def setProcTypeIfNeeded( self, aSite ):
+        if isinstance( aSite, tuple ):
+            self.procType= aSite[ 1 ].upper()
+            aSite= aSite[ 0 ]
+        elif not hasattr( self, "_procType" ):
+            try:
+                self.procType= self._nameType()
+            except:
+                self.procType= self._retrCondDName( self._nameType() )
+        
+        return aSite
+        
     def _addYear2SaveCSV( self ):
         """manipulate csv string to include year"""
         splList= self._saveCSV.split(".")
@@ -190,9 +143,9 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         
         topList += self._joinTableEntries( tPlayerListsForObjs )
         
-        nextTableList= self._getAllNextPlayerPages( doc, pageAddress )
-        if len( nextTableList ) > 0 and levelDownRecurse <= self._maxDepth:
-            _, levelDownRecurse= self._processPage( nextTableList[0], siteIdx, numSites, topList, levelDownRecurse )
+        nextProcLinkList= self._getAllNextPlayerPages( doc, pageAddress )
+        if len( nextProcLinkList ) > 0 and levelDownRecurse < self._maxDepth:
+            _, levelDownRecurse= self._processPage( nextProcLinkList[0], siteIdx, numSites, topList, levelDownRecurse )
         
         return topList, levelDownRecurse
     # en processPage
@@ -254,8 +207,17 @@ class ProjTableBase( object, metaclass= ABCMeta ):
                 if tKey in aPlayerDict:
                     aPlayerDict[ self._finalRemap[ aKey ] ]= aPlayerDict[ tKey ]
                     del aPlayerDict[ tKey ]
+            
+            self._doRequiredFieldChecks( aPlayerDict )
                     
         return siteListPlayers
+    
+    def _doRequiredFieldChecks( self, aPlayerDict ):
+        if not self._excludeFromProcTypeCheck:
+            fieldsList= retrieveReqFieldList( self._procType )
+            checkFields( self, aPlayerDict, fieldsList )
+        else:
+            pass
     
     def parseTableRowTag( self, aRow, playerRow, pageAddress ):
         tagDataList= aRow.findAll( 'td' ) 
@@ -285,7 +247,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
                     saveKey= saveKey.upper()
                         
                     if saveKey is not None:
-                        playerDict[ saveKey ]= attemptFloatParse( aTag.text.replace( ",", "" ) ) # handle numbers with commas
+                        playerDict[ saveKey ]= ffl.attemptFloatParse( aTag.text.replace( ",", "" ) ) # handle numbers with commas
             else:
                 pass
               
@@ -304,7 +266,7 @@ class ProjTableBase( object, metaclass= ABCMeta ):
         for anItem in inArg:
             assert isinstance( anItem, tuple ), "types in list must be tuples"
             assert len( anItem ) == 2, "tuple must be of length 2 with column followed by method" 
-            assert is_numeric( anItem[0] ), "First input must be numeric"
+            assert ffl.is_numeric( anItem[0] ), "First input must be numeric"
             str( type( anItem[ self._colOverrideMethodIdx ]) ) == "<class 'method'>", "second element in tuple must be class method"
             
             if anItem[0] not in self._cols2override: # remove duplicate specified columns 
@@ -335,14 +297,18 @@ class ProjTableBase( object, metaclass= ABCMeta ):
 #             print( inName )
 #         if not nameDict[ inName ] in unqNames:
 #             print( nameDict[ inName ]  )
-            
-        assert inName in self._condTeamDict.keys(), str( self ) + " does not contain key: " + inName + " for team name"
         
-        return self._condTeamDict[ inName ]
+        try:
+            assert inName in self._condTeamDict.keys(), str( self ) + " does not contain key: " + inName + " for team name"
+        except:
+            print()
+        
+        try:
+            return self._condTeamDict[ inName ]
+        except:
+            pass
     
     def _nameType( self ):
-        out= None
-    
         myName= self.__class__
         # get class from my own name.
         reMatch= re.match( ".*([a-zA-Z]+)", str( myName ).split("_")[-1] )
@@ -405,6 +371,13 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     def setSites( self, inArg ):
             
         assert isinstance( inArg, list ), "_sites must be a list"
+        for anElement in inArg:
+            if not isinstance( anElement, str ):
+                assert isinstance( anElement, tuple ), "must be tuple or string"
+            
+            if isinstance( anElement, tuple ):
+                assert anElement[1] in self._allowedProcTypes, "second element in tuple must be QB, RB, WR, TE, DST or K" 
+        
         self._sites= inArg
         
     def _isnextSiteLink( self, aTag, pageAddress, nextTableList ):
@@ -426,6 +399,13 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     def setTables( self, inArg ):
         assert isinstance( inArg, list )
         self._tables= inArg
+        
+    def getProcType( self ):
+        return self._procType
+    
+    def setProcType( self, inVal ):
+        assert inVal.upper() in self._allowedProcTypes, str( inVal ) + " is not in list of allowed procTypes: " + str( self._allowedProcTypes )
+        self._procType= inVal  
          
     """special override for a column which needs weird parsing"""
     columnMethodOverRide= property( getColumnMethodOverRide, setColumnMethodOverRide )
@@ -434,76 +414,5 @@ class ProjTableBase( object, metaclass= ABCMeta ):
     sites= property( getSites, setSites )
     otherTblProcObjs= property( getTblObj, setTblObj )
     tables= property( getTables, setTables )
-
-def is_numeric( inArg ):
-    attrs = ['__add__', '__sub__', '__mul__', '__truediv__', '__pow__']
-    return all( hasattr( inArg, attr ) for attr in attrs )
- 
-def attemptFloatParse(strIn):
-    try:
-        return( float( strIn) )
-    except:
-        return np.NAN
+    procType= property( getProcType, setProcType )
     
-def getSelfModuleName( levelUp= 1 ):
-    fName= inspect.getouterframes( inspect.currentframe() )[ levelUp ].filename
-    modName= os.path.basename( fName ).split( ".py" )[ 0 ]
-    packageName= os.path.basename( os.path.dirname( fName ) )
-    return packageName + "." + modName
-
-def getAllModules():
-    """ Get the names of any .py file that ends in Grabber.py"""
-    packageObject= inspect.getmodule( ffl )
-    packageDir= os.path.dirname( packageObject.__file__ )
-    listings= os.listdir( packageDir )
-    print("retrieving all names which end in Grabber.py ...")
-    full_files= [ os.path.join( packageDir, aListing ) for aListing in listings 
-            if os.path.isfile( os.path.join( packageDir, aListing ) ) and 
-             os.path.join( packageDir, aListing ).endswith(".py") and
-             re.search( ".*Grabber\.py$" , aListing ) ]
-    
-    importModuleNames= [ "ffl." + os.path.split( aName )[-1].split( ".py" )[0] for aName in full_files ]
-    return importModuleNames
-
-def executeClassMain( classInstancesList= None, save2csv= True ):
-    """ INtended to be called from main of a Grabber.py """
-    if classInstancesList is None:
-        classInstancesList= getClassInstances( levelUp= 3 )
-        
-    outputList= []
-    for anObj in classInstancesList:
-        outputList += anObj.process( save2csv= save2csv )
-        
-    return outputList
-
-def getClassInstances( importModuleNames= None, levelUp= 2 ):
-    """ Get all instances for a set of modules """
-    if importModuleNames is None:
-        importModuleNames= [ getSelfModuleName( levelUp= levelUp ) ]
-    
-    """Grab all of the class objects excluding specific ones"""
-    exclusionClassList= [ "NF_names", "ProjTableBase" ]
-    classes2Construct=[]
-    for aModuleName in importModuleNames:
-        moduleMembers= inspect.getmembers( import_module( aModuleName ) )
-        for moduleMemberName, aModuleObject  in moduleMembers:
-            if inspect.isclass( aModuleObject ) and moduleMemberName not in exclusionClassList:
-                classes2Construct.append( aModuleObject )
-    
-    """Construct the class for processing."""
-    tAll2run= []
-    for aClass in classes2Construct:
-        try:
-            tAll2run.append( aClass() )
-        except:
-            traceback.print_exc()
-    
-    """Check the types"""
-    all2run= []
-    for aClassInstance in tAll2run:
-        if isinstance( aClassInstance, ProjTableBase ):
-            all2run.append( aClassInstance )
-        else:
-            warnings.warn( "Class not correct type: " + str( aClassInstance ) )
-    
-    return all2run
